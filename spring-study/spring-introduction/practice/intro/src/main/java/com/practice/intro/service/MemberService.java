@@ -4,6 +4,7 @@ package com.practice.intro.service;
 import com.practice.intro.domain.Member;
 import com.practice.intro.repository.MemberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +22,7 @@ public class MemberService {
      * @param member
      * @return Long
      */
+    @Transactional
     public Long join(Member member) {
         // 같은 이름이 있는 중복 회원 안됨!
         validateDuplicateMember(member);

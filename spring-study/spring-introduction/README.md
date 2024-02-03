@@ -141,3 +141,23 @@ application properties :
 ---
 
 ### 스프링 데이터 JPA
+* 인터페이스 만으로 개발을 완료 가능하다.
+* JPA 지식이 선행돼야 함.
+* 인터페이스를 통한 기본적인 CRUD / 페이징 기능 자동 제공
+* findByName() , findByEmail() 처럼 메서드 이름 만으로 조회 기능 제공
+*  Querydsl을 사용하면 쿼리도 자바 코드로 안전하게 작성할 수 있고, 동적 쿼리도 편리하게 작성할 수 있다.
+```java
+public interface SpringDataJpaMemberRepository extends JpaRepository<Member,
+  Long>, MemberRepository {}
+```
+
+---
+### AOP: Aspect Oriented Programming
+* 목표 : 공통 관심 사항(cross-cutting concern) vs 핵심 관심 사항(core concern) 분리
+* `@Aspect`
+* `@Around("execution(* package path ..*(..))")` 제공하는 Around 문법을 활용하여  
+적용 범위 및 param 조건을 지정할 수 있다.
+
+#### AOP 동작 방식 - spring
+* aop 적용 시 스프링 컨테이너는 실제 Bean 이 아니라 Bean 의 프록시를 주입시킨다.  
+프록시에서 공통 관심사항을 처리하면서 내부에서 실제 Bean 을 호출한다.

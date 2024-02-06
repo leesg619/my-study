@@ -158,7 +158,7 @@ MemberRepository m = new MemoryMemberRepository();  // 인터페이스만 (Membe
 * 프로그램에 대한 제어 흐름에 대한 권한은 모두 `AppConfig`가 가지고 있다.  
 심지어 `OrderServiceImpl` 도 `AppConfig`가 생성한다.  
 그리고 `AppConfig`는 `OrderServiceImpl` 이 아닌 `OrderService` 인터페이스의 다른 구현 객체를 생성하고 실행할 수도 있다.  
-그런 사실도 모른체 OrderServiceImpl 은 묵묵히 자신의 로직을 실행할 뿐이다.
+그런 사실도 모르고 `OrderServiceImpl` 은 묵묵히 자신의 로직을 실행할 뿐이다.
 * 이렇듯 **프로그램의 제어 흐름을 직접 제어하는 것이 아니라 외부에서 관리하는 것**을 **제어의 역전(IoC)** 이라 한다.
 * 프레임워크 vs 라이브러리
   * 프레임워크가 내가 작성한 코드를 제어하고, 대신 실행하면 그것은 프레임워크가 맞다. (JUnit)
@@ -185,4 +185,18 @@ MemberRepository m = new MemoryMemberRepository();  // 인터페이스만 (Membe
 
 ---
 
-### 스프링으로 전환하기
+### 스프링 컨테이너
+* ApplicationContext 를 스프링 컨테이너라 한다.
+```java
+public class OrderApp {
+    public static void main(String[] args) {
+        ApplicationContext applicationContext = new AnnotationConfigApplicationContext(AppConfig.class);
+        MemberService memberService = applicationContext.getBean("memberService", MemberService.class);
+        OrderService orderService = applicationContext.getBean("orderService", OrderService.class);
+    }
+}
+```
+* 스프링 컨테이너는 @Configuration 이 붙은 AppConfig 를 설정(구성) 정보로 사용한다. 여기서 @Bean 이
+  라 적힌 메서드를 모두 호출해서 반환된 객체를 스프링 컨테이너에 등록한다. 이렇게 스프링 컨테이너에 등록된
+  객체를 스프링 빈이라 한다.
+* 스프링 빈은 @Bean 이 붙은 메서드의 명을 스프링 빈의 이름으로 사용한다.

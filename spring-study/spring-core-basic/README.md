@@ -200,3 +200,64 @@ public class OrderApp {
   라 적힌 메서드를 모두 호출해서 반환된 객체를 스프링 컨테이너에 등록한다. 이렇게 스프링 컨테이너에 등록된
   객체를 스프링 빈이라 한다.
 * 스프링 빈은 @Bean 이 붙은 메서드의 명을 스프링 빈의 이름으로 사용한다.
+
+---
+
+### 스프링 컨테이너 생성
+`ApplicationContext applicationContext = new AnnotationConfigApplicationContext(AppConfig.class);`
+* 스프링 컨테이너는 XML을 기반으로 만들 수 있고, 애노테이션 기반의 자바 설정 클래스로 만들 수 있다.
+* 직전에 `AppConfig` 를 사용했던 방식이 애노테이션 기반의 자바 설정 클래스로 스프링 컨테이너를 만든 것이다.
+* 참고: 더 정확히는 스프링 컨테이너를 부를 때 `BeanFactory` , `ApplicationContext` 로 구분해서 이야기하는데,  
+`BeanFactory` 를 직접 사용하는 경우는 거의 없으므로 일반적으로 `ApplicationContext` 를 스프링 컨테이너라 한다.
+
+주의: 빈 이름은 항상 다른 이름을 부여해야 한다. 같은 이름을 부여하면, 다른 빈이 무시되거나, 기존 빈을 덮어버
+리거나 설정에 따라 오류가 발생한다. (최근 스프링 버전에서는 같은 이름의 빈이 충돌나면 경고를 날리면서 기본적으로 튕김.)
+실무에서는 항상 다른 이름으로 명확히 부여 하는게 제일 중요
+
+---
+
+### 스프링 빈 조회
+_스프링 컨테이너에서 빈을 직접 조회하는 일은 거의 없다. 대부분 생성자, @Autowired 등으로 의존관계 주입을 받음_
+
+#### 컨테이너에 등록된 모든 빈 조회 : [Junit5 TEST Code](https://github.com/leesg619/my-study/blob/main/spring-study/spring-core-basic/practice/core/src/test/java/com/practice/core/beanfind/ApplicationContextInfoTest.java)
+* 모든 빈 출력하기
+  * 실행하면 스프링에 등록된 모든 빈 정보를 출력할 수 있다.
+  * `ac.getBeanDefinitionNames()` : 스프링에 등록된 모든 빈 이름을 조회한다.
+  * `ac.getBean(String beanDefinitionName)` : 빈 이름으로 빈 객체(인스턴스)를 조회한다.
+
+* 애플리케이션 빈 출력하기
+  * 스프링이 내부에서 사용하는 빈은 제외하고 출력하려면? 스프링이 내부에서 사용하는 빈은 `getRole()` 로 구분할 수 있다.
+    * `ROLE_APPLICATION` : 일반적으로 사용자가 정의한 빈
+    * `ROLE_INFRASTRUCTURE` : 스프링이 내부에서 사용하는 빈
+
+#### 스프링 빈 조회 - 기본 : [Junit5 TEST Code](https://github.com/leesg619/my-study/blob/main/spring-study/spring-core-basic/practice/core/src/test/java/com/practice/core/beanfind/ApplicationContextBasicFindTest.java)
+* 스프링 컨테이너에서 스프링 빈을 찾는 가장 기본적인 조회
+  * `ac.getBean(빈이름, 타입)`
+  * `ac.getBean(타입)`
+* 조회 대상 스프링 빈이 없으면 예외 발생
+  * `NoSuchBeanDefinitionException: No bean named 'xxxxx' available`
+  * 참고: 구체 타입으로 조회하면 변경시 유연성이 떨어진다.
+
+#### 스프링 빈 조회 - 동일한 타입이 둘 이상 : [Junit5 TEST Code](https://github.com/leesg619/my-study/blob/main/spring-study/spring-core-basic/practice/core/src/test/java/com/practice/core/beanfind/ApplicationContextSameBeanFindTest.java)
+* 동일한 타입이 둘 이상이면, 타입으로 조회시 같은 타입의 스프링 빈이 둘 이상이면 오류가 발생한다.  
+`NoUniqueBeanDefinitionException` 발생
+* 이때는 빈 이름을 지정하면 되며, `ac.getBeansOfType()` 을 사용하면 해당 타입의 모든 빈을 조회할 수 있다.
+
+#### 스프링 빈 조회 - 상속 관계 : [Junit5 TEST Code](https://github.com/leesg619/my-study/blob/main/spring-study/spring-core-basic/practice/core/src/test/java/com/practice/core/beanfind/ApplicationContextExtendsFindTest.java)
+* 대원칙 : 부모 타입으로 조회 시, 자식 타입도 함께 조회한다.
+* 그래서 모든 자바 객체의 최고 부모인 Object 타입으로 조회하면, 모든 스프링 빈을 조회한다.
+
+---
+
+
+
+
+
+
+
+
+
+
+
+
+

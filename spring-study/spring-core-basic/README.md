@@ -376,5 +376,50 @@ _스프링 컨테이너에서 빈을 직접 조회하는 일은 거의 없다. �
 ---
 
 ### `@Configuration`과 싱글톤
+* [AppConfig](https://github.com/leesg619/my-study/blob/main/spring-study/spring-core-basic/practice/core/src/main/java/com/practice/core/config/AppConfig.java) 코드를 보면, 스프링 컨테이너가 각각 `@Bean`을 호출해서 스프링 빈을 생성한다. 그래서 `memberRepository()` 는 다음과 같이 총 3번이 호출되어야 하는 것 아닐까?
+1. 스프링 컨테이너가 스프링 빈에 등록하기 위해 `@Bean`이 붙어있는 `memberRepository()` 호출
+2. `memberService()` 로직에서 `memberRepository()` 호출
+3. `orderService()` 로직에서 `memberRepository()` 호출  
+
+그러나 호출 테스트 시 결과는 모두 1번만 호출된다.
 
 ### `@Configuration`과 바이트코드 조작의 마법
+스프링 컨테이너는 싱글톤 레지스트리다. 따라서 스프링 빈이 싱글톤이 되도록 보장해주어야 한다. 그런데 스프링이 자바 코드까지 어떻게 하기는 어렵다.  
+저 자바 코드를 보면 분명 3번 호출되어야 하는 것이 맞다. 그래서 스프링은 클래스의 바이트코드를 조작하는 라이브러리를 사용한다.
+
+```java
+@Test
+void configurationDeep() {
+ ApplicationContext ac = new AnnotationConfigApplicationContext(AppConfig.class);
+ //AppConfig도 스프링 빈으로 등록된다.
+ AppConfig bean = ac.getBean(AppConfig.class);
+ 
+ System.out.println("bean = " + bean.getClass());
+ //출력: bean = class hello.core.AppConfig$$EnhancerBySpringCGLIB$$bd479d70
+}
+```
+* 사실 AnnotationConfigApplicationContext 에 파라미터로 넘긴 값은 스프링 빈으로 등록된다. 그래서 AppConfig 도 스프링 빈이 된다.
+* AppConfig 스프링 빈을 조회해서 클래스 정보를 출력해보면 아래와 같다.  
+  `bean = class hello.core.AppConfig$$EnhancerBySpringCGLIB$$bd479d70`  
+  (순수한 클래스라면 다음과 같이 출력되어야 함 `class hello.core.AppConfig` )
+
+이것은 내가 만든 클래스가 아니라 스프링이 `CGLIB`라는 바이트코드 조작 라이브러리를 사용해서  
+`AppConfig` 클래스를 상속받은 임의의 다른 클래스를 만들고, 그 다른 클래스를 스프링 빈으로 등록한 것이다.
+
+#### `AppConfig@CGLIB` 예상 코드 동작
+* `@Bean`이 붙은 메서드마다 이미 스프링 빈이 존재하면 존재하는 빈을 반환하고, 스프링 빈이 없으면 생성해서 스
+프링 빈으로 등록하고 반환하는 코드가 동적으로 만들어진다. 그 덕분에 싱글톤이 보장되는 것이다.
+* 참고 `AppConfig@CGLIB`는 `AppConfig`의 자식 타입이므로, `AppConfig` 타입으로 조회 할 수 있다.
+
+---
+
+#### @Configuration 을 적용하지 않고, @Bean 만 적용하면 어떻게 될까?
+* `bean = class hello.core.AppConfig` -> CGLIB 기술 없이 순수한 `AppConfig`로 스프링 빈에 등록된 것을 확인할 수 있으며,
+* 인스턴스 확인 시 각각 다른 인스턴스를 가짐 (싱글톤 X) (`memberRepository()` 생성 메소드를 3번 호출)
+
+#### 정리
+* `@Bean`만 사용해도 스프링 빈으로 등록되지만, 싱글톤을 보장하지 않는다.
+* `memberRepository()` 처럼 의존관계 주입이 필요해서 메서드를 직접 호출할 때 싱글톤을 보장하지 않는다.
+* 크게 고민할 것이 없다. **스프링 설정 정보는 항상 `@Configuration` 을 사용하자**
+  
+---

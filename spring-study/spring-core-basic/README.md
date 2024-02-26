@@ -710,3 +710,194 @@ void createOrder(){
 
 ---
 
+### LOMBOK과 최신 트랜드
+
+* 막상 개발을 해보면, 대부분이 다 불변이고, 그래서 다음과 같이 필드에 final 키워드를 사용하게 된다.  
+  그런데 생성자도 만들어야 하고, 주입 받은 값을 대입하는 코드도 만들어야 하고… 편리하게 사용하는 방법은 없을까?
+
+* 롬복 라이브러리가 제공하는 `@RequiredArgsConstructor` 기능을 사용하면 final이 붙은 필드를 모아서 생성자를 자동으로 만들어준다. (다음 코드에는 보이지 않지만 실제 호출 가능하다.)
+
+최종 결과 코드
+
+```java
+
+@Component
+@RequiredArgsConstructor
+public class OrderServiceImpl implements OrderService {
+	private final MemberRepository memberRepository;
+	private final DiscountPolicy discountPolicy;
+}
+```
+
+* 이 최종결과 코드와 이전의 코드는 완전히 동일하다. 롬복이 자바의 애노테이션 프로세서라는 기능을 이용해서 컴파일 시점에 생성자 코드를 자동으로 생성해준다.
+* 실제 class 를 열어보면 다음 코드가 추가되어 있는 것을 확인할 수 있다.
+
+```java
+public OrderServiceImpl(MemberRepository memberRepository,DiscountPolicy
+	discountPolicy){
+	this.memberRepository=memberRepository;
+	this.discountPolicy=discountPolicy;
+	}
+```
+
+#### 정리
+
+* 최근에는 생성자를 딱 1개 두고, `@Autowired` 를 생략하는 방법을 주로 사용한다.  
+  여기에 `Lombok` 라이브러리의 `@RequiredArgsConstructor` 함께 사용하면 기능은 다 제공하면서, 코드는 깔끔하게 사용할 수 있다.
+
+---
+
+### 조회 빈이 2개 이상 - 문제
+
+* @Autowired 는 타입(Type)으로 조회한다.
+  `@Autowired private DiscountPolicy discountPolicy`
+* 타입으로 조회하기 때문에, 마치 다음 코드와 유사하게 동작한다. (실제로는 더 많은 기능을 제공한다.)
+  `ac.getBean(DiscountPolicy.class)`
+* 스프링 빈 조회에서 학습했듯, 타입으로 조회하면, 선택된 빈이 2개 이상일 때 문제가 발생한다.
+* `NoUniqueBeanDefinitionException` 오류 발생
+    * `NoUniqueBeanDefinitionException: No qualifying bean of type 'hello.core.discount.DiscountPolicy' available: expected single matching bean but found 2: fixDiscountPolicy,rateDiscountPolicy`
+
+> 이때 하위 타입으로 지정할 수 도 있지만, 하위 타입으로 지정하는 것은 DIP를 위배하고 유연성이 떨어진다.  
+> 그리고 이름만 다르고, 완전히 똑같은 타입의 스프링 빈이 2개 있을 때 해결이 안된다.  
+> 스프링 빈을 수동 등록해서 문제를 해결해도 되지만, 의존 관계 자동 주입에서 해결하는 여러 방법이 있다.
+
+---
+
+#### 1. `@Autowired` 필드 명 매칭
+
+* 필드 명 매칭은 먼저 타입 매칭을 시도 하고 그 결과에 여러 빈이 있을 때 추가로 동작하는 기능이다.
+* 필드 명을 빈 이름으로 변경하면 된다.
+    * ex. `@Autowired private DiscountPolicy discountPolicy` -> `@Autowired private DiscountPolicy rateDiscountPolicy`
+
+참고 : `@Autowired` 매칭 순서
+
+1. 타입 매칭
+2. 타입 매칭의 결과가 2개 이상일 때 필드 명, 파라미터 명으로 빈 이름 매칭
+
+---
+
+#### 2. `@Qualifier` 사용
+
+* `@Qualifier` 는 추가 구분자를 붙여주는 방법이다. 주입시 추가적인 방법을 제공하는 것이지 **빈 이름을 변경하는 것은 아니다.**
+
+a) 빈 등록시 `@Qualifier` 를 붙여 준다.
+
+```
+    @Component
+    @Qualifier("mainDiscountPolicy")
+    public class RateDiscountPolicy implements DiscountPolicy {}
+```
+
+b) 주입시에 `@Qualifier`를 붙여주고 등록한 이름을 적어준다.
+
+```
+@Autowired
+public OrderServiceImpl(MemberRepository memberRepository, @Qualifier("mainDiscountPolicy") DiscountPolicy discountPolicy) {
+    this.memberRepository = memberRepository;
+    this.discountPolicy = discountPolicy;
+}
+```
+
+> @Qualifier 로 주입할 때 `@Qualifier("mainDiscountPolicy")` 를 못찾으면 어떻게 될까?  
+> 그러면 `mainDiscountPolicy`라는 이름의 스프링 빈을 추가로 찾는다.  
+> 하지만 `@Qualifier` 는 `@Qualifier` 를 찾는 용도로만 사용하는게 명확하고 좋다.
+
+다음과 같이 직접 빈 등록시에도 @Qualifier를 동일하게 사용할 수 있다.
+
+```
+@Bean
+@Qualifier("mainDiscountPolicy")
+public DiscountPolicy discountPolicy(){
+	return new...
+}
+```
+
+`@Qualifier` 찾는 순서 정리
+
+1. `@Qualifier`끼리 매칭
+2. 빈 이름 매칭
+3. `NoSuchBeanDefinitionException` 예외 발생
+
+---
+
+#### 3. `@Primary`
+
+* `@Primary` 는 우선순위를 정하는 방법이다. `@Autowired` 시에 여러 빈이 매칭되면 `@Primary` 가 우선권을 가진다.
+
+```java
+// rateDiscountPolicy 가 우선권을 가지도록 한다. 선언하면 끝
+@Component
+@Primary
+public class RateDiscountPolicy implements DiscountPolicy {
+}
+
+@Component
+public class FixDiscountPolicy implements DiscountPolicy {
+}
+```
+
+> **정리**  
+> 여기까지 보면 `@Primary` 와 `@Qualifier` 중에 어떤 것을 사용하면 좋을지 고민이 될 것이다.  
+> @Qualifier 의 단점은 주입 받을 때 모든 코드에 `@Qualifier` 를 붙여주어야 한다는 점이다.
+> 반면에 `@Primary` 를 사용하면 이렇게 `@Qualifier` 를 붙일 필요가 없다.
+
+### `@Primary`, `@Qualifier` 활용
+
+코드에서 자주 사용하는 메인 DB의 커넥션을 획득하는 스프링 빈이 있고, 코드에서 특별한 기능으로 가끔 사용하는 서브 DB의 커넥션을 획득하는 스프링 빈이 있다고 생각해보자.  
+메인 DB의 커넥션을 획득하는 스프링 빈은 `@Primary` 를 적용해서 조회하는 곳에서 `@Qualifier` 지정 없이 편리하게 조회하고,
+서브 DB 커넥션 빈을 획득할 때는 `@Qualifier` 를 지정해서 명시적으로 획득하는 방식으로 사용하면 코드를 깔끔하게 유지할 수 있다.  
+물론 이때 메인 데이터베이스의 스프링 빈을 등록할 때 `@Qualifier` 를 지정해주는 것은 상관없다.
+
+#### 우선순위
+
+`@Primary` 는 기본값 처럼 동작하는 것이고,` @Qualifier` 는 매우 상세하게 동작한다. 이런 경우 어떤 것이 우선권을
+가져갈까? 스프링은 자동보다는 수동이, 넒은 범위의 선택권 보다는 좁은 범위의 선택권이 우선 순위가 높다. 따라서 여
+기서도 `@Qualifier` 가 우선권이 높다.
+
+---
+
+### 애노테이션 직접 만들기
+
+* `@Qualifier("mainDiscountPolicy")` 이렇게 문자를 적으면 컴파일시 타입 체크가 안된다.
+* 다음과 같은 애노테이션을 만들어서 문제를 해결할 수 있다. 참고 : **[QnA](https://www.inflearn.com/questions/401416)**
+
+```java
+package hello.core.annotataion;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+
+import java.lang.annotation.*;
+
+@Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER,
+	ElementType.TYPE, ElementType.ANNOTATION_TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Qualifier("mainDiscountPolicy")
+public @interface MainDiscountPolicy {
+	// 위 애노테이션 선언 시 : @Qualiofier 의 정의부에서 가져온 annotation 들 이며, 붙여줘야 스프링이 인식한다.
+	// @Retention은 자바 언어차원에서 처리되는 부분이다. 컴포넌트 스캔이 런타임에 일어나므로 런타임으로 설정해야함. 
+}
+```
+
+```java
+
+@Component
+@MainDiscountPolicy
+public class RateDiscountPolicy implements DiscountPolicy {
+}
+```
+
+```java
+//생성자 자동 주입
+@Autowired
+public OrderServiceImpl(MemberRepository memberRepository,
+@MainDiscountPolicy DiscountPolicy discountPolicy){}
+```
+
+> 애노테이션에는 상속이라는 개념이 없다. 이렇게 여러 애노테이션을 모아서 사용하는 기능은 스프링이 지원해주는 기능이다.  
+> `@Qualifier` 뿐만 아니라 다른 애노테이션들도 함께 조합해서 사용할 수 있다. 단적으로 `@Autowired` 도 재정의 할 수 있다.  
+> 물론 스프링이 제공하는 기능을 뚜렷한 목적 없이 무분별하게 재정의 하는 것은 유지보수에 더 혼란만 가중할 수 있다.
+ 
+---
+
+###

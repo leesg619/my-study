@@ -7,7 +7,7 @@ import java.util.List;
 
 import lombok.Getter;
 import sample.cafekiosk.unit.beverage.Beverage;
-import sample.cafekiosk.unit.beverage.order.Order;
+import sample.cafekiosk.unit.order.Order;
 
 @Getter
 public class CafeKiosk {

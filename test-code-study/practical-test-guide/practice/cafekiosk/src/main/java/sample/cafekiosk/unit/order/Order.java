@@ -1,4 +1,4 @@
-package sample.cafekiosk.unit.beverage.order;
+package sample.cafekiosk.unit.order;
 
 import java.time.LocalDateTime;
 import java.util.List;

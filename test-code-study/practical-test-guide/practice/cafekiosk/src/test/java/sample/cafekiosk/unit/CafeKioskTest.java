@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import sample.cafekiosk.unit.beverage.Americano;
 import sample.cafekiosk.unit.beverage.Latte;
-import sample.cafekiosk.unit.beverage.order.Order;
+import sample.cafekiosk.unit.order.Order;
 
 class CafeKioskTest {
 

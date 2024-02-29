@@ -900,4 +900,9 @@ public OrderServiceImpl(MemberRepository memberRepository,
  
 ---
 
-###
+### 조회한 빈이 모두 필요할 때, List, Map
+
+* 의도적으로 정말 해당 타입의 스프링 빈이 다 필요한 경우도 있다.
+* 예를 들어서 할인 서비스를 제공하는데, 클라이언트가 할인의 종류(rate, fix)를 선택할 수 있다고 가정해보자.  
+  스프링을 사용하면 소위 말하는 전략 패턴을 매우 간단하게 구현할 수 있다.
+

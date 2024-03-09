@@ -17,6 +17,18 @@ configurations {
     }
 }
 
+// 에러 내용은 생성자의 매개변수 이름을 해석할 수가 없다
+// java.lang.IllegalStateException: Cannot resolve parameter names for constructor
+// Spring boot 3.2.0 부터는 Spring Framework 6.1을 사용하게 되었다.
+// LocalVariableTableParameterNameDiscoverer 를 더 이상 사용하지 않게 되었고
+// 이로 인해 발생할 수 있는 매개 변수 관련 이슈는 -parameter 옵션을 Compile 시에 활성화 시켜야 된다고 한다.
+// 해결 방법 -parameter 옵션 활성화
+// IntelliJ IDEA Build, Execution, Deployment → Compiler → Java Compiler → Additional command line parameters 에 -parameter 추가
+// build.gradle에 아래 내용 추가
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-parameters"
+}
+
 repositories {
     mavenCentral()
 }
@@ -25,7 +37,8 @@ dependencies {
     // Spring boot
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    
     // lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

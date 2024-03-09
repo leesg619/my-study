@@ -164,10 +164,179 @@ void add(){
 
 ---
 
-###
-
 ### 통합 테스트
 
 - 여러 모듈이 협력하는 기능을 통합적으로 검증하는 테스트 (ex. 레이어드 아키텍처 검증)
 - 단위 테스트만으로는 커버하기가 어려운 영역들이 생기기 시작 ( 동작 순서 차이가 있거나 예기치 못한 결과가 나올 수가 있음 )
 - 그래서 보통은 풍부한 단위 테스트와 그 다음에 큰 기능 단위 / 시나리오 단위를 검증하는 통합 테스트 이렇게 두 가지 관점으로 접근하면 좋다.
+
+---
+
+Temp
+Persistence Layer 테스트 (1) / (2)
+
+요구사항
+✓ 키오스크 주문을 위한 상품 후보 리스트 조회하기
+✓ 상품의 판매 상태: 판매중, 판매보류, 판매중지
+→ 판매중, 판매보류인 상태의 상품을 화면에 보여준다.
+✓id, 상품 번호, 상품 타입, 판매 상태, 상품 이름, 가격
+
+어 일단 이제 한가지 짚고 넘어가자면 이제 jpa 리포지토리 같은 걸 이제 사용하는 경우에
+이렇게 query method 같은 걸 사용해서 이렇게 이름을 잘 지으면 아니 이렇게 쿼리가 잘 날라갈 게 명확한데 왜 테스트쿼리를 작성할까요
+-> 지금은 사실 되게 간단한 쿼리니까 우리가 예측이 되게 쉽게 되는데 예를 들어 뭐 where절의 조건이 엄청 많아서 쿼리 메서드가 엄청 길어진다거나 파라미터를 잘못 줄 수 있고,
+아니면 이제 구현하는 기술 자체가 JPA가 아니라 mybatis / jpql / querydsl 등으로 구현 방법 자체가 변경될 때가 있으니 그것들을 보장하는 차원에서 작성한다.
+아니면 JPA 로 작성한 코드 그 자체가 미래에 어떻게 변환이 될지도 모르므로 작성해두는 것이 좋다.
+
+이제 단위테스트에서 넘어와서 스프링 통합테스트를 진행할건데 사실상 리포지토리 테스트는 단위 테스트 성격에 가까운 테스트
+그러니까 통합 테스트라고 해서 어쨌든 스프링 서버를 띄워서 우리가 리포지토리에 대한 테스트를 진행을 할 거지만,
+어쨌든 레이어별로 끊어서 봤을 때는 어떤 데이터베이스에 액세스하는 계층이 퍼시스턴스 레이어의 역할인데
+데이터베이스에 액세스하는 그 로직만 갖고 있기 때문에 이 기능 단위로 보자면 약간 단위 테스트 성격을 갖고 있기는 함.
+
+추가로 @DataJpaTest 소개
+얘도 스프링 서버를 띄워서 테스트를 하는데 뭐가 다르냐 데이터 jpa 테스트는 스프링 부트 테스트보다 가볍다.
+그러니까 jpa 관련된 빈들만 주입을 해줘서 서버를 띄워줍니다
+그래서 되게 속도가 좀 더 빠르게 서버를 띄울 수 있는 장점이 있는데 결론 먼저 말하자면 저는 데이터 jpa 테스트보다는 스프링 부트 테스트를 좀 더 선호를 해요
+이건 다음섹션.
+
++ 인프런 강의 노트에 assertThat 검증 체이닝 + profile 지정해주는것 추가해줌 (안해주니까 얘가 local로 인식해서 data.sql 이 동작했었던 작은 이슈)
+
+@Autowired vs @MockBean https://upcurvewave.tistory.com/600
+
+생성자 주입 선택 시 테스트 코드 작성의 장점?
+https://www.inflearn.com/questions/515588/%EC%83%9D%EC%84%B1%EC%9E%90-%EC%A3%BC%EC%9E%85-%EC%84%A0%ED%83%9D-%EC%8B%9C-%ED%85%8C%EC%8A%A4%ED%8A%B8-%EC%BD%94%EB%93%9C-%EC%9E%91%EC%84%B1%EC%9D%98-%EC%9E%A5%EC%A0%90
+
+https://minkukjo.github.io/framework/2020/06/28/JUnit-23/
+생성자 주입 이슈
+
+——
+요구사항
+✓ 상품 번호 리스트를 받아 주문 생성하기
+✓ 주문은 주문 상태, 주문 등록 시간을 가진다.
+✓ 주문의 총 금액을 계산할 수 있어야 한다.
+
+Persistence Layer
+✓ Data Access의 역할
+✓ 비즈니스 가공 로직이 포함되어서는 안 된다.
+Data에 대한 CRUD에만 집중한 레이어
+
+Business Layer
+비즈니스 로직을 구현하는 역할
+✓ Persistence Layer와의 상호작용(Data를 읽고 쓰는 행위)을 통해 비즈니스 로직을 전개시킨다.
+✓ 트랜잭션을 보장해야 한다.
+
+Persistene Layer는 테스트 시 스프링 서버 올려서 하지만 단위테스트 느낌이 나고, Busines Lawyer 는 통합 테스트 시 Persistence Layer를 거칠 수 밖에 없기 때문에 통합적인 느낌이 그래도 남 .
+
+요구사항
+✓ 주문 생성 시 재고 확인 및 개수 차감 후 생성하기
+✓ 재고는 상품번호를 가진다.
+재고와 관련 있는 상품 타입은 병 음료, 베이커리이다.
+
+요구사항
+✓ 주문 생성 시 재고 확인 및 개수 차감 후 생성하기
+✓ 재고는 상품번호를 가진다.
+재고와 관련 있는 상품 타입은 병 음료, 베이커리이다.
+
+@Transactional 위험성
+
+Service 단에 붙이지 않고 test단에서만 @Transactional 를 붙이면,
+실제 프로덕션 코드에 적용이 돼야 할 @Transactional 이 잘 동작한다고 착각해서
+문제를 뒤늦게발견할 수도 있어서, 테스트단에서의 @Transactional 을 잘 사용을 해야하고,
+실수를 방지하려면 테스트단에서 @Transactional 대신에 아래 코드로 delete 시켜주는 방법도 있다.
+@AfterEach
+void tearDown() {
+//productRepository.deleteAll()
+orderProductRepository.deleteAllInBatch();
+productRepository.deleteAllInBatch();
+orderRepository.deleteAllInBatch();
+stockRepository.deleteAllInBatch();
+}
+
+결론 : 쓰지 말자는 것이 아니라, 팀원 모두 부작용을 인지한 후에 잘 사용하는 것이 중요하다.
+
+---
+
+### Presentation Layer
+
+* 외부 세계의 요청을 가장 먼저 받는 계층
+* 파라미터에 대한 최소한의 검증을 수행한다.
+
+그래서 이 값들이 정말 우리가 비즈니스 로직을 전개시키기 전에 어떤 유효한가에 대한 검증을
+하는 게 최우선, 그런 것들을 중점으로 테스트를 한번 작성을 해보면 좋음.
+
+저희가 퍼시센트 레이어랑 비즈니스 레이어 같은 경우는 스프링을 통으로 띄워서 우리가 통합테스트를 진행을 했었죠
+그래서 이제 특히 비즈니스 레이어 같은 경우는 데이터 엑섹스 하는 퍼시센트 레이어를 뭔가
+Mocking을 하거나 이러지 않고 이제 통으로 같이 테스트를 했었는데 저는 이제 프레젠테이션
+레이어를 테스트할 때는 사실 이제 하위에 있는 저 두 레이어를 Mocking 처리를 할 거예요
+정상 동작하는 걸 가정하고 이제 프레젠테이션 레이어, 내가 테스트하고자 하는 레이어에만 집중해서 테스트하겠다.
+
+#### MockMvc
+
+* Mock(가짜) 객체를 사용해 스프링 MVC 동작을 재현할 수 있는 테스트 프레임워크
+  우리가 테스트하는 대상에 Spring Framework를 사용하면서 어떤 하나의 객체 혹은하나의 레이어를 테스트할 때 의존관계를 갖고 있는 것들이 있는데,
+  준비해야할 것이 너무 많아서, 가짜로 잘 동작하는 걸 가정하고 처리하고 싶을때 사용하는 테스트 프레임워크
+
+#### 요구사항
+
+* 관리자 페이지에서 신규 상품을 등록할 수 있다.
+* 상품명, 상품 타입, 판매 상태, 가격 등을 입력받는다.
+
+### Presentation Layer : Controller Test 작성하기
+
+#### `@WebMvcTest`
+
+* 전체 Bean Context 를 올려서 사용하는 `@SpringbootTest` 대신, 컨트롤러만 떼서 컨트롤러와 관련된 빈들만 올려서 테스트할 수 있는 가벼운 테스트 annotation
+* 사용법
+
+```java
+
+@WebMvcTest(controllers = ProductController.class)
+class ProductControllerTest {
+
+	@Autowired
+	private MockMvc mockMvc;
+
+	@MockBean
+	private ProductService productService;
+}
+```
+
+테스트하고자 하는 컨트롤러를 명시하면 된다.
+
+#### `@MockBean` , `@Mock`
+
+* `spring-boot-starter-test` 를 쓰면 자동으로 **mockito** 가 포함되어있음.  (mockito : 모킹 프레임워크)
+* `@MockBean` 목 객체를 만들어 대신 빈으로 넣어주는 역할
+    * 위 예로 보면 ProductController 라는 빈을 생성을 하면, ProductService가 없다고 나올 것이므로 @MockBean 처리를 해야 예외가 터지지 않을 것이다.
+
+#### mockMvc.perform()
+
+* api를 날리는 동작 수행
+* 괄호 내부에 수행에 필요한 정보들을 넣을 수 있다.
+* ex code
+
+```
+  mockMvc.perform(
+          post("/api/v1/products/new")
+              .content(objectMapper.writeValueAsString(request))
+              .contentType(MediaType.APPLICATION_JSON)
+      )
+```
+
+> post같은 경우는 http body의 값을 넣다 보니까 직렬화랑 역직렬화의 과정을 거치게 됨  
+> 따라서 우리가 만든 object 를 json 형태로 직렬화하는 과정을 거쳐서 byte 배열 형태나 아니면 string 형태로 content 에 넣어주면 되는데,  
+> 이 직렬화를 하기 위해서 ObjectMapper를 @Atuowired 로 테스트에 포함시킨다.  
+> ObjectMapper : 직렬화와 역직렬화, Json과 Object 간의 직렬화,역직렬화를 도와준다.  
+> contentType : json 타입을 헤더에 명시를 해준다.
+
+* 검증은 `.andExpect(MockMvcResultMatchers.status().isOk());` 이렇게 체이닝식으로 걸어줘서 확인함
+* `.andDo(MockMvcResultHandlers.print())` 를 써서 자세한 로그를 찍어볼 수 있다.
+
+* 참고
+* 오류 1: `Error creating bean with name 'jpaMappingContext': JPA metamodel must not be empty ` 오류 : @SpringBootApplication위에 달아놓은 @EnableJpaAuditing 관련 문제.  
+  config로 따로 관리해주면 해결
+* 오류 2: `MockHttpServletResponse:    Status = 400 Error message = Invalid request content.` 인 경우, controller 에 @Requestbody 달았는지 확인
+* 오류 3 : `java.lang.IllegalStateException: Cannot resolve parameter names for constructor` 오류 : 스프링 버전이 올라가면서 체킹해야될 문제. build.gradle 에 정리해놓음.
+
+#### 검증
+
+컨트롤러의 역할 중에 하나는 파라미터가 잘 들어왔는지 기본적인 유효성 검사, 밸리데이션을 하는 것이다.

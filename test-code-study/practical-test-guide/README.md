@@ -172,84 +172,75 @@ void add(){
 
 ---
 
-Temp
-Persistence Layer 테스트 (1) / (2)
+요구사항
+
+* 키오스크 주문을 위한 상품 후보 리스트 조회하기
+* 상품의 판매 상태: 판매중, 판매보류, 판매중지
+* 판매중, 판매보류인 상태의 상품을 화면에 보여준다.
+* id, 상품 번호, 상품 타입, 판매 상태, 상품 이름, 가격
+
+### `JpaRepository` 같은 걸 사용하는 경우, Query Method 를 사용하여 이름을 잘 지으면 쿼리가 잘 날아갈 것이 명확한데 왜 테스트쿼리를 작성할까요?
+
+* 간단한 쿼리들은 예측이 되게 쉽게 되지만, 예를 들어 where절의 조건이 엄청 많아서 쿼리 메서드가 엄청 길어진다거나, 파라미터를 잘못 줄 수 있고,  
+  아니면 구현하는 기술 자체가 `JPA`가 아니라 `mybatis / jpql / querydsl` 등으로 구현 방법 자체가 변경될 때가 있으니 그것들을 보장하는 차원에서 작성한다.  
+  아니면 JPA 로 작성한 코드 그 자체가 미래에 어떻게 변환이 될지도 모르기 때문에 작성해두는 것이 좋다.
+* 사실상 `Repository Test`는 단위 테스트 성격에 가까운 테스트이다.
+  통합 테스트라 하여 스프링 서버를 띄워서 `Repository`에 대한 테스트를 진행을 하지만, 레이어별로 끊어서 봤을 때는 어떤 DB에 access하는 계층이 퍼시스턴스 레이어의 역할인데,  
+  데이터베이스에 액세스하는 그 로직만 갖고 있기 때문에 이 기능 단위로 보자면 약간 단위 테스트 성격을 갖고 있긴 한 것이다.
+
+### `@DataJpaTest` 소개
+
+* 스프링 서버를 띄워서 테스트를 하지만, `@DataJpaTest`는 스프링 부트 테스트보다 가볍다. jpa 관련된 빈들만 주입을 해줘서 서버를 띄워주기 때문이다.
+  그래서 속도가 좀 더 빠르게 서버를 띄울 수 있는 장점이 있는데 결론적으로는 데이터 jpa 테스트보다는 스프링 부트 테스트가 좀 더 선호된다. 다음섹션 정리
+
+#### +인프런 강의 노트에 assertThat 검증 체이닝 + profile 지정해주는것 추가해줌 (안해주니까 얘가 local로 인식해서 data.sql 이 동작했었던 작은 이슈)
+
+#### 개인 참고 link
+
+[@Autowired vs @MockBean](https://upcurvewave.tistory.com/600)  
+[생성자 주입 선택 시 테스트 코드 작성의 장점?](https://www.inflearn.com/questions/515588/%EC%83%9D%EC%84%B1%EC%9E%90-%EC%A3%BC%EC%9E%85-%EC%84%A0%ED%83%9D-%EC%8B%9C-%ED%85%8C%EC%8A%A4%ED%8A%B8-%EC%BD%94%EB%93%9C-%EC%9E%91%EC%84%B1%EC%9D%98-%EC%9E%A5%EC%A0%90)  
+[생성자 주입 이슈](https://minkukjo.github.io/framework/2020/06/28/JUnit-23/)
+
+---
 
 요구사항
-✓ 키오스크 주문을 위한 상품 후보 리스트 조회하기
-✓ 상품의 판매 상태: 판매중, 판매보류, 판매중지
-→ 판매중, 판매보류인 상태의 상품을 화면에 보여준다.
-✓id, 상품 번호, 상품 타입, 판매 상태, 상품 이름, 가격
 
-어 일단 이제 한가지 짚고 넘어가자면 이제 jpa 리포지토리 같은 걸 이제 사용하는 경우에
-이렇게 query method 같은 걸 사용해서 이렇게 이름을 잘 지으면 아니 이렇게 쿼리가 잘 날라갈 게 명확한데 왜 테스트쿼리를 작성할까요
--> 지금은 사실 되게 간단한 쿼리니까 우리가 예측이 되게 쉽게 되는데 예를 들어 뭐 where절의 조건이 엄청 많아서 쿼리 메서드가 엄청 길어진다거나 파라미터를 잘못 줄 수 있고,
-아니면 이제 구현하는 기술 자체가 JPA가 아니라 mybatis / jpql / querydsl 등으로 구현 방법 자체가 변경될 때가 있으니 그것들을 보장하는 차원에서 작성한다.
-아니면 JPA 로 작성한 코드 그 자체가 미래에 어떻게 변환이 될지도 모르므로 작성해두는 것이 좋다.
+* 상품 번호 리스트를 받아 주문 생성하기
+* 주문은 주문 상태, 주문 등록 시간을 가진다.
+* 주문의 총 금액을 계산할 수 있어야 한다.
+* 주문 생성 시 재고 확인 및 개수 차감 후 생성하기
+* 재고는 상품번호를 가진다. 재고와 관련 있는 상품 타입은 병 음료, 베이커리이다.
 
-이제 단위테스트에서 넘어와서 스프링 통합테스트를 진행할건데 사실상 리포지토리 테스트는 단위 테스트 성격에 가까운 테스트
-그러니까 통합 테스트라고 해서 어쨌든 스프링 서버를 띄워서 우리가 리포지토리에 대한 테스트를 진행을 할 거지만,
-어쨌든 레이어별로 끊어서 봤을 때는 어떤 데이터베이스에 액세스하는 계층이 퍼시스턴스 레이어의 역할인데
-데이터베이스에 액세스하는 그 로직만 갖고 있기 때문에 이 기능 단위로 보자면 약간 단위 테스트 성격을 갖고 있기는 함.
+### Persistence Layer
 
-추가로 @DataJpaTest 소개
-얘도 스프링 서버를 띄워서 테스트를 하는데 뭐가 다르냐 데이터 jpa 테스트는 스프링 부트 테스트보다 가볍다.
-그러니까 jpa 관련된 빈들만 주입을 해줘서 서버를 띄워줍니다
-그래서 되게 속도가 좀 더 빠르게 서버를 띄울 수 있는 장점이 있는데 결론 먼저 말하자면 저는 데이터 jpa 테스트보다는 스프링 부트 테스트를 좀 더 선호를 해요
-이건 다음섹션.
+* Data Access의 역할
+* 비즈니스 가공 로직이 포함되어서는 안 된다.
+* Data에 대한 CRUD에만 집중한 레이어
 
-+ 인프런 강의 노트에 assertThat 검증 체이닝 + profile 지정해주는것 추가해줌 (안해주니까 얘가 local로 인식해서 data.sql 이 동작했었던 작은 이슈)
+### Business Layer
 
-@Autowired vs @MockBean https://upcurvewave.tistory.com/600
-
-생성자 주입 선택 시 테스트 코드 작성의 장점?
-https://www.inflearn.com/questions/515588/%EC%83%9D%EC%84%B1%EC%9E%90-%EC%A3%BC%EC%9E%85-%EC%84%A0%ED%83%9D-%EC%8B%9C-%ED%85%8C%EC%8A%A4%ED%8A%B8-%EC%BD%94%EB%93%9C-%EC%9E%91%EC%84%B1%EC%9D%98-%EC%9E%A5%EC%A0%90
-
-https://minkukjo.github.io/framework/2020/06/28/JUnit-23/
-생성자 주입 이슈
-
-——
-요구사항
-✓ 상품 번호 리스트를 받아 주문 생성하기
-✓ 주문은 주문 상태, 주문 등록 시간을 가진다.
-✓ 주문의 총 금액을 계산할 수 있어야 한다.
-
-Persistence Layer
-✓ Data Access의 역할
-✓ 비즈니스 가공 로직이 포함되어서는 안 된다.
-Data에 대한 CRUD에만 집중한 레이어
-
-Business Layer
 비즈니스 로직을 구현하는 역할
-✓ Persistence Layer와의 상호작용(Data를 읽고 쓰는 행위)을 통해 비즈니스 로직을 전개시킨다.
-✓ 트랜잭션을 보장해야 한다.
 
-Persistene Layer는 테스트 시 스프링 서버 올려서 하지만 단위테스트 느낌이 나고, Busines Lawyer 는 통합 테스트 시 Persistence Layer를 거칠 수 밖에 없기 때문에 통합적인 느낌이 그래도 남 .
+* Persistence Layer와의 상호작용(Data를 읽고 쓰는 행위)을 통해 비즈니스 로직을 전개시킨다.
+* 트랜잭션을 보장해야 한다.
+* Persistene Layer는 테스트 시 스프링 서버 올려서 하지만 단위테스트 느낌이 나고,  
+  Busines Lawyer 는 통합 테스트 시 Persistence Layer를 거칠 수 밖에 없기 때문에 통합적인 느낌이 나는 것이다.
 
-요구사항
-✓ 주문 생성 시 재고 확인 및 개수 차감 후 생성하기
-✓ 재고는 상품번호를 가진다.
-재고와 관련 있는 상품 타입은 병 음료, 베이커리이다.
+> **@Transactional 위험성**  
+> Service 단에 붙이지 않고 test단에서만 `@Transactional` 를 붙이면, 실제 프로덕션 코드에 적용이 돼야 할 `@Transactional` 이 잘 동작한다고 착각해서 문제를 뒤늦게 발견할 수도 있다,   
+> 테스트단에서의 @Transactional 을 잘 사용을 해야하고,  
+> 실수를 방지하려면 테스트단에서 @Transactional 대신에 아래 코드로 delete 시켜주는 방법도 있다.
 
-요구사항
-✓ 주문 생성 시 재고 확인 및 개수 차감 후 생성하기
-✓ 재고는 상품번호를 가진다.
-재고와 관련 있는 상품 타입은 병 음료, 베이커리이다.
-
-@Transactional 위험성
-
-Service 단에 붙이지 않고 test단에서만 @Transactional 를 붙이면,
-실제 프로덕션 코드에 적용이 돼야 할 @Transactional 이 잘 동작한다고 착각해서
-문제를 뒤늦게발견할 수도 있어서, 테스트단에서의 @Transactional 을 잘 사용을 해야하고,
-실수를 방지하려면 테스트단에서 @Transactional 대신에 아래 코드로 delete 시켜주는 방법도 있다.
+```
 @AfterEach
-void tearDown() {
-//productRepository.deleteAll()
-orderProductRepository.deleteAllInBatch();
-productRepository.deleteAllInBatch();
-orderRepository.deleteAllInBatch();
-stockRepository.deleteAllInBatch();
-}
+void tearDown(){
+	//productRepository.deleteAll()
+	orderProductRepository.deleteAllInBatch();
+	productRepository.deleteAllInBatch();
+	orderRepository.deleteAllInBatch();
+	stockRepository.deleteAllInBatch();
+	}
+```
 
 결론 : 쓰지 말자는 것이 아니라, 팀원 모두 부작용을 인지한 후에 잘 사용하는 것이 중요하다.
 
@@ -332,11 +323,20 @@ class ProductControllerTest {
 * `.andDo(MockMvcResultHandlers.print())` 를 써서 자세한 로그를 찍어볼 수 있다.
 
 * 참고
-* 오류 1: `Error creating bean with name 'jpaMappingContext': JPA metamodel must not be empty ` 오류 : @SpringBootApplication위에 달아놓은 @EnableJpaAuditing 관련 문제.  
+* 오류 1 : `Error creating bean with name 'jpaMappingContext': JPA metamodel must not be empty ` 오류 : @SpringBootApplication위에 달아놓은 @EnableJpaAuditing 관련 문제.  
   config로 따로 관리해주면 해결
-* 오류 2: `MockHttpServletResponse:    Status = 400 Error message = Invalid request content.` 인 경우, controller 에 @Requestbody 달았는지 확인
+* 오류 2 : `MockHttpServletResponse:    Status = 400 Error message = Invalid request content.` 인 경우, controller 에 @Requestbody 달았는지 확인
 * 오류 3 : `java.lang.IllegalStateException: Cannot resolve parameter names for constructor` 오류 : 스프링 버전이 올라가면서 체킹해야될 문제. build.gradle 에 정리해놓음.
+* 오류 4 : `H2 Console Sorry, remote connections ('webAllowOthers') are disabled on this server.` 오류 : 아래 yml 설정하기
 
-#### 검증
+```
+h2:
+  console:
+    enabled: true
+  settings:
+    web-allow-others: true
+```
 
-컨트롤러의 역할 중에 하나는 파라미터가 잘 들어왔는지 기본적인 유효성 검사, 밸리데이션을 하는 것이다.
+### Presentation Layer 테스트 (2)
+
+컨트롤러의 역할 중에 하나는 파라미터가 잘 들어왔는지 기본적인 유효성 검사, validation을 잘 하는 것

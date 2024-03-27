@@ -1,16 +1,16 @@
 package sample.cafekiosk.spring.api.service.product;
 
-import org.springframework.transaction.annotation.Transactional;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
-import sample.cafekiosk.spring.api.controller.product.dto.request.ProductCreateRequest;
+import org.springframework.transaction.annotation.Transactional;
+
+import lombok.RequiredArgsConstructor;
+import sample.cafekiosk.spring.api.service.product.request.ProductCreateServiceRequest;
 import sample.cafekiosk.spring.api.service.product.response.ProductResponse;
 import sample.cafekiosk.spring.domain.product.Product;
 import sample.cafekiosk.spring.domain.product.ProductRepository;
 import sample.cafekiosk.spring.domain.product.ProductSellingStatus;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Transactional(readOnly = true) //기본이 false고, true 값으로 주면 읽기 전용 트랜잭션이 열림 (CRUD 에서 CUD 동작 X)
 @RequiredArgsConstructor
@@ -26,7 +26,7 @@ public class ProductService {
      * 동시 접속사가 너무 많은 케이스에는 UUID 활용해서 아예 번호 자체가 유니크하게 나오니까.. 활용해볼 수도 있다.
      */
     @Transactional
-    public ProductResponse createProduct(ProductCreateRequest request) {
+    public ProductResponse createProduct(ProductCreateServiceRequest request) {
         String nextProductNumber = createNextProductNumber();
 
         Product product = request.toEntity(nextProductNumber);
@@ -51,6 +51,6 @@ public class ProductService {
 
         return products.stream()
                 .map(ProductResponse::of)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

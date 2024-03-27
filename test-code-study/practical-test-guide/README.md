@@ -340,3 +340,37 @@ h2:
 ### Presentation Layer 테스트 (2)
 
 컨트롤러의 역할 중에 하나는 파라미터가 잘 들어왔는지 기본적인 유효성 검사, validation을 잘 하는 것
+
+---
+### Mockito로 Stubbing하기
+---
+
+### Test Double
+
+* Dummy
+    * 아무 것도 하지 않는 깡통 객체
+* Fake
+    * 단순한 형태로 동일한 기능은 수행하나, 프로덕션에서 쓰기에는 부족한 객체 (ex. FakeRepository)
+* Stub
+    * 테스트에서 요청한 것에 대해 미리 준비한 결과를 제공하는 객체 그 외에는 응답하지 않는다.
+* Spy
+    * Stub이면서 호출된 내용을 기록하여 보여줄 수 있는 객체 일부는 실제 객체처럼 동작시키고 일부만 Stubbing할 수 있다.
+* Mock
+    * 행위에 대한 기대를 명세하고, 그에 따라 동작하도록 만들어진 객체
+
+#### Stub vs Mock
+
+Stub : 상태 검증 (State Verification)
+Mock : 행위 검증 (Behavior Verification)
+
+---
+
+### 순수 Mockito로 검증해보기 (@Mock, @Spy, @InjectMocks)
+
+#### `@MockBean`
+
+스프링 컨텍스트에 등록된 Bean을 Mock 객체로 치환해주는 역할 = 즉, 스프링 서버가 떠야 사용 가능한 어노테이션
+
+#### `@Mock + @InjectMocks` 조합
+
+스프링 컨텍스트가 필요하지 않은 곳에서 사용 (주로 단위 테스트)

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>스프링 입문 | My Study</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root"></div>
+
+  <main class="content">
+    <p class="eyebrow">인프런 · 김영한</p>
+    <h1>스프링 입문 - 코드로 배우는 스프링 부트, 웹 MVC, DB 접근 기술</h1>
+    <p>
+      스프링 입문자가 예제를 만들어가면서 스프링 웹 애플리케이션 개발 전반을 빠르게 학습하는 강의를 정리한 노트입니다.
+      최대한 쉽게 서술하는 방식으로 정리했습니다.
+    </p>
+
+    <h2>섹션 목록</h2>
+    <div id="section-list"></div>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initCourseIndexPage({ rootPath: "../" });
+    renderSectionList("#section-list", window.SECTIONS);
+  </script>
+</body>
+</html>

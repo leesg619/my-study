@@ -119,6 +119,11 @@
     var container = document.querySelector(selector);
     if (!container || !sections) return;
 
+    if (!sections.length) {
+      container.appendChild(ce("p", { class: "eyebrow", text: "아직 정리된 섹션이 없습니다. 강의를 들으며 추가될 예정입니다." }));
+      return;
+    }
+
     var ol = ce("ol", { class: "section-list" });
     sections.forEach(function (section) {
       var li = ce("li");

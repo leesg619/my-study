@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2. 컴포넌트 등록과 의존관계 설정 - 스프링 입문</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-02"></div>
+
+  <main class="content">
+    <p class="eyebrow">스프링 입문</p>
+    <h1>2. 컴포넌트 등록과 의존관계 설정</h1>
+
+    <h2>TEST (JUnit Framework)</h2>
+    <p>
+      모든 테스트는 각각의 메소드에 대해 독립적이어야 한다. 한 번에 모든 테스트를 실행했을 때 각 테스트가 서로의
+      테스트에 영향을 주지 않도록 해야 한다.
+    </p>
+    <ul>
+      <li>
+        <code>@AfterEach</code> — 한 번에 여러 테스트를 실행하면 메모리 DB에 직전 테스트의 결과가 남을 수 있다. 이렇게
+        되면 이전 테스트 때문에 다음 테스트가 실패할 가능성이 있다. <code>@AfterEach</code> 사용 시 각 테스트가 종료될
+        때마다 이 기능을 실행한다. 적절히 활용하여 테스트를 작성한다.
+      </li>
+      <li>
+        <code>@BeforeEach</code> — 각 테스트 실행 전에 호출된다. 테스트가 서로 영향이 없도록 항상 새로운 객체를
+        생성하고, 의존관계도 새로 맺어주는 방식으로 활용할 수 있다.
+      </li>
+    </ul>
+
+    <h2>컴포넌트 스캔과 자동 의존관계 설정 <code>@Component</code></h2>
+    <ul>
+      <li><code>@Component</code> 애노테이션이 있으면 컨테이너가 올라갈 때 스캔해서 빈 객체로 자동 등록한다.</li>
+      <li><code>@Autowired</code>는 컨테이너가 연결관계를 매칭해준다 (자동 의존관계 설정). DI의 기본이라고 할 수 있다 (바깥에서 스프링이 주입시킴).</li>
+      <li>
+        메인 메소드의 <code>@SpringBootApplication</code> 애노테이션이 하는 컴포넌트 스캔의 대상은 기본적으로 해당
+        메인 메소드가 속한 패키지다 (예: <code>package com.practice.intro;</code>). 설정으로 바꿀 수 있다.
+      </li>
+      <li><code>@Component</code>를 포함하는 다음 애노테이션도 스프링 빈으로 자동 등록된다: <code>@Controller</code> <code>@Service</code> <code>@Repository</code></li>
+    </ul>
+    <pre><code>@Service
+public class MemberService {
+    private final MemberRepository memberRepository;
+
+    @Autowired
+    public MemberService(MemberRepository memberRepository) {
+        this.memberRepository = memberRepository;
+    }
+}</code></pre>
+    <ul>
+      <li>생성자에 <code>@Autowired</code>를 사용하면 객체 생성 시점에 스프링 컨테이너에서 해당 스프링 빈을 찾아 주입한다. 생성자가 1개만 있으면 <code>@Autowired</code>는 생략할 수 있다.</li>
+      <li>스프링 빈을 등록할 때, 기본으로 싱글톤으로 등록한다 (설정으로 바꿀 수 있지만 대부분 싱글톤을 사용한다).</li>
+    </ul>
+
+    <h2>자바 코드로 직접 스프링 빈 등록 <code>@Configuration</code> <code>@Bean</code></h2>
+    <ul>
+      <li>상황에 따라 구현 클래스를 변경해야 할 때 설정을 통해 스프링 빈으로 등록하는 방법이다.</li>
+      <li><code>@Service</code>, <code>@Repository</code>, <code>@Autowired</code>를 제거한 후 아래와 같이 Configuration 자바 파일로 관리한다.</li>
+    </ul>
+    <pre><code>@Configuration
+public class SpringConfig {
+    @Bean
+    public MemberService memberService() { return new MemberService(memberRepository()); }
+    @Bean
+    public MemberRepository memberRepository() { return new MemoryMemberRepository(); }
+}</code></pre>
+    <ul>
+      <li>
+        최상위인 컨트롤러는 <code>@Controller</code>, <code>@Autowired</code>를 그대로 사용한다. 스프링은
+        <code>@Controller</code> 애노테이션이 있어야 스프링 MVC 컨트롤러로 인식할 수 있고, 어차피 스프링 부트는
+        기본으로 컴포넌트 스캔을 하기 때문에 간편히 애노테이션을 사용하는 게 편하다.
+      </li>
+      <li>
+        주의: <code>@Autowired</code>를 통한 DI는 <code>helloController</code>, <code>memberService</code> 등과 같이
+        스프링이 관리하는 객체에서만 동작한다. 스프링 빈으로 등록하지 않고 직접 생성한 객체에서는 동작하지 않는다.
+      </li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "스프링 입문",
+      courseHome: "index.html",
+      currentId: "section-02",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

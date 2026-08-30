@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>8. 조회한 빈이 모두 필요할 때 - 스프링 핵심 원리 기본편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-08"></div>
+
+  <main class="content">
+    <p class="eyebrow">스프링 핵심 원리 - 기본편</p>
+    <h1>8. 조회한 빈이 모두 필요할 때, List, Map</h1>
+
+    <ul>
+      <li>의도적으로 정말 해당 타입의 스프링 빈이 다 필요한 경우도 있다.</li>
+      <li>예를 들어서 할인 서비스를 제공하는데, 클라이언트가 할인의 종류(rate, fix)를 선택할 수 있다고 가정해보자. 스프링을 사용하면 소위 말하는 전략 패턴을 매우 간단하게 구현할 수 있다.</li>
+    </ul>
+
+    <blockquote>
+      <p>원본 README가 여기서 끝나 있어서, 강의를 이어 들으면서 이 섹션에 내용을 계속 채워나가면 됩니다.</p>
+    </blockquote>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "스프링 핵심 원리 - 기본편",
+      courseHome: "index.html",
+      currentId: "section-08",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

@@ -1,3 +1,7 @@
+> ⚠️ **이관 완료**: 이 문서의 정리 내용은 [GitHub Pages 사이트](https://leesg619.github.io/my-study/spring-core-basic/)로 이전되었습니다.
+> 앞으로 내용을 추가/수정할 때는 이 README가 아니라 사이트 쪽(`/spring-core-basic/section-*.html`)을 편집해주세요.
+> 이 파일은 이관 시점의 원문 보존용으로만 남겨둡니다.
+
 ## 영한님 스프링 핵심 원리 - 기본편
 
 > 스프링 입문자가 예제를 만들어가면서 스프링의 핵심 원리를 이해하고,

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>5. 컴포넌트 스캔 - 스프링 핵심 원리 기본편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-05"></div>
+
+  <main class="content">
+    <p class="eyebrow">스프링 핵심 원리 - 기본편</p>
+    <h1>5. 컴포넌트 스캔</h1>
+
+    <h2>컴포넌트 스캔</h2>
+    <ul>
+      <li>지금까지 스프링 빈을 등록할 때는 자바 코드의 <code>@Bean</code>이나 XML의 <code>&lt;bean&gt;</code> 등을 통해서 설정 정보에 직접 등록할 스프링 빈을 나열했다.</li>
+      <li>스프링은 설정 정보가 없어도 자동으로 스프링 빈을 등록하는 컴포넌트 스캔이라는 기능을 제공한다.</li>
+      <li>또 의존관계도 자동으로 주입하는 <code>@Autowired</code>라는 기능도 제공한다.</li>
+    </ul>
+    <h3>사용법</h3>
+    <ul>
+      <li>컴포넌트 스캔을 사용하려면 먼저 <code>@ComponentScan</code>을 설정 정보에 붙여주면 된다.</li>
+      <li>컴포넌트 스캔은 이름 그대로 <code>@Component</code> 애노테이션이 붙은 클래스를 스캔해서 스프링 빈으로 등록한다. 각 클래스가 스캔 대상이 되도록 <code>@Component</code>를 붙여준다.</li>
+      <li>참고: <code>@Configuration</code>이 컴포넌트 스캔의 대상이 된 이유도 <code>@Configuration</code> 소스코드를 열어보면 <code>@Component</code> 애노테이션이 붙어있기 때문이다.</li>
+      <li>이전에 AppConfig에서는 <code>@Bean</code>으로 직접 설정 정보를 작성했고, 의존관계도 직접 명시했다. 이제는 이런 설정 정보 자체가 없기 때문에, 의존관계 주입도 이 클래스 안에서 해결해야 한다.</li>
+      <li><code>@Autowired</code>는 의존관계를 자동으로 주입해준다 (생성자에서 여러 의존관계도 한 번에 주입받을 수 있다).</li>
+      <li>
+        스프링 빈의 기본 이름은 클래스명을 사용하되 맨 앞글자만 소문자를 사용한다.
+        <ul>
+          <li>빈 이름 기본 전략: <code>MemberServiceImpl</code> 클래스 → <code>memberServiceImpl</code></li>
+          <li>빈 이름 직접 지정: 스프링 빈의 이름을 직접 지정하고 싶으면 <code>@Component("memberService2")</code>처럼 이름을 부여하면 된다.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>컴포넌트 스캔: 탐색 위치와 기본 스캔 대상</h2>
+    <h3>탐색할 패키지의 시작 위치 지정</h3>
+    <p>모든 자바 클래스를 다 컴포넌트 스캔하면 시간이 오래 걸린다. 그래서 꼭 필요한 위치부터 탐색하도록 시작 위치를 지정할 수 있다.</p>
+    <pre><code>@ComponentScan(
+    basePackages = "hello.core",
+)</code></pre>
+    <ul>
+      <li>
+        <code>basePackages</code>: 탐색할 패키지의 시작 위치를 지정한다. 이 패키지를 포함해서 하위 패키지를 모두
+        탐색한다. <code>basePackages = {"hello.core", "hello.service"}</code>처럼 여러 시작 위치를 지정할 수도 있다.
+      </li>
+      <li><code>basePackageClasses</code>: 지정한 클래스의 패키지를 탐색 시작 위치로 지정한다.</li>
+      <li>만약 지정하지 않으면 <code>@ComponentScan</code>이 붙은 설정 정보 클래스의 패키지가 시작 위치가 된다.</li>
+    </ul>
+
+    <h3>권장하는 방법</h3>
+    <p>
+      패키지 위치를 지정하지 않고, 설정 정보 클래스의 위치를 프로젝트 최상단에 두는 것이다. 최근 스프링 부트도
+      이 방법을 기본으로 제공한다. 스프링 부트를 사용하면 스프링 부트의 대표 시작 정보인
+      <code>@SpringBootApplication</code>을 이 프로젝트 시작 루트 위치에 두는 것이 관례다 (이 설정 안에
+      <code>@ComponentScan</code>이 들어있다).
+    </p>
+
+    <h3>컴포넌트 스캔 기본 대상</h3>
+    <p>컴포넌트 스캔은 <code>@Component</code>뿐만 아니라 다음 내용도 추가로 대상에 포함한다.</p>
+    <ul>
+      <li><code>@Component</code>: 컴포넌트 스캔에서 사용</li>
+      <li><code>@Controller</code>: 스프링 MVC 컨트롤러에서 사용</li>
+      <li><code>@Service</code>: 스프링 비즈니스 로직에서 사용</li>
+      <li><code>@Repository</code>: 스프링 데이터 접근 계층에서 사용</li>
+      <li><code>@Configuration</code>: 스프링 설정 정보에서 사용</li>
+      <li>해당 클래스들의 소스 코드를 보면 <code>@Component</code>를 포함하고 있는 것을 알 수 있다.</li>
+    </ul>
+    <pre><code>@Component
+public @interface Controller {
+}
+@Component
+public @interface Service {
+}
+@Component
+public @interface Configuration {
+}</code></pre>
+    <blockquote>
+      <p>
+        참고: 사실 애노테이션에는 상속관계라는 것이 없다. 그래서 이렇게 애노테이션이 특정 애노테이션을 들고 있는
+        것을 인식할 수 있는 것은 자바 언어가 지원하는 기능이 아니라, 스프링이 지원하는 기능이다.
+      </p>
+    </blockquote>
+    <p>컴포넌트 스캔의 용도뿐만 아니라 다음 애노테이션이 있으면 스프링은 부가 기능을 수행한다.</p>
+    <ul>
+      <li><code>@Controller</code>: 스프링 MVC 컨트롤러로 인식</li>
+      <li><code>@Repository</code>: 스프링 데이터 접근 계층으로 인식하고, 데이터 계층의 예외를 스프링 예외로 변환해준다.</li>
+      <li><code>@Configuration</code>: 스프링 설정 정보로 인식하고, 스프링 빈이 싱글톤을 유지하도록 추가 처리를 한다.</li>
+      <li><code>@Service</code>: 특별한 처리를 하지 않는다. 대신 개발자들이 핵심 비즈니스 로직이 여기에 있겠구나 라고 비즈니스 계층을 인식하는 데 도움이 된다.</li>
+    </ul>
+
+    <h3>필터</h3>
+    <ul>
+      <li><code>includeFilters</code>: 컴포넌트 스캔 대상을 추가로 지정한다.</li>
+      <li><code>excludeFilters</code>: 컴포넌트 스캔에서 제외할 대상을 지정한다.</li>
+    </ul>
+    <p>FilterType: 5가지 옵션이 있다.</p>
+    <ul>
+      <li><strong>ANNOTATION</strong>: 기본값, 애노테이션을 인식해서 동작한다. 예) <code>org.example.SomeAnnotation</code></li>
+      <li><strong>ASSIGNABLE_TYPE</strong>: 지정한 타입과 자식 타입을 인식해서 동작한다. 예) <code>org.example.SomeClass</code></li>
+      <li><strong>ASPECTJ</strong>: AspectJ 패턴 사용. 예) <code>org.example..*Service+</code></li>
+      <li><strong>REGEX</strong>: 정규 표현식. 예) <code>org\.example\.Default.*</code></li>
+      <li><strong>CUSTOM</strong>: <code>TypeFilter</code> 인터페이스를 구현해서 처리. 예) <code>org.example.MyTypeFilter</code></li>
+    </ul>
+    <blockquote>
+      <p>
+        참고: <code>@Component</code>면 충분하기 때문에, <code>includeFilters</code>를 사용할 일은 거의 없다.
+        <code>excludeFilters</code>는 여러 가지 이유로 간혹 사용할 때가 있지만 많지는 않다. 특히 최근 스프링 부트는
+        컴포넌트 스캔을 기본으로 제공하는데, 옵션을 변경하면서 사용하기보다는 스프링의 기본 설정에 최대한 맞추어
+        사용하는 것을 권장한다.
+      </p>
+    </blockquote>
+
+    <h3>컴포넌트 중복 등록과 충돌</h3>
+    <p><strong>자동 빈 등록 vs 자동 빈 등록</strong></p>
+    <ul>
+      <li>컴포넌트 스캔에 의해 자동으로 스프링 빈이 등록되는데, 그 이름이 같은 경우 스프링은 오류를 발생시킨다 (<code>ConflictingBeanDefinitionException</code>).</li>
+    </ul>
+    <p><strong>수동 빈 등록 vs 자동 빈 등록</strong></p>
+    <p>이 경우 수동 빈 등록이 우선권을 가진다 (수동 빈이 자동 빈을 오버라이딩 해버린다).</p>
+    <p>수동 빈 등록 시 남는 로그:</p>
+    <pre><code>Overriding bean definition for bean 'memoryMemberRepository' with a different definition: replacing</code></pre>
+    <blockquote>
+      <p>
+        하지만 현실은 개발자가 의도적으로 설정해서 이런 결과가 만들어지기보다는 여러 설정들이 꼬여서 이런 결과가
+        만들어지는 경우가 대부분이다. 그러면 정말 잡기 어려운 버그가 만들어진다. 항상 잡기 어려운 버그는 애매한
+        버그다. 그래서 최근 스프링 부트에서는 수동 빈 등록과 자동 빈 등록이 충돌나면 오류가 발생하도록 기본값을
+        바꾸었다.
+      </p>
+    </blockquote>
+    <p>수동 빈 등록, 자동 빈 등록 오류 시 스프링 부트 에러:</p>
+    <pre><code>Consider renaming one of the beans or enabling overriding by setting spring.main.allow-bean-definition-overriding=true</code></pre>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "스프링 핵심 원리 - 기본편",
+      courseHome: "index.html",
+      currentId: "section-05",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

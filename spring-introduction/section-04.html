@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4. AOP - 스프링 입문</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-04"></div>
+
+  <main class="content">
+    <p class="eyebrow">스프링 입문</p>
+    <h1>4. AOP: Aspect Oriented Programming</h1>
+
+    <ul>
+      <li>목표: 공통 관심 사항(cross-cutting concern) vs 핵심 관심 사항(core concern) 분리</li>
+      <li><code>@Aspect</code></li>
+      <li>
+        <code>@Around("execution(* package path ..*(..))")</code>가 제공하는 Around 문법을 활용하여 적용 범위 및
+        param 조건을 지정할 수 있다.
+      </li>
+    </ul>
+
+    <h2>AOP 동작 방식 - spring</h2>
+    <p>
+      AOP 적용 시 스프링 컨테이너는 실제 Bean이 아니라 Bean의 프록시를 주입시킨다. 프록시에서 공통 관심사항을
+      처리하면서 내부에서 실제 Bean을 호출한다.
+    </p>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "스프링 입문",
+      courseHome: "index.html",
+      currentId: "section-04",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

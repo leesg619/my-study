@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 1 - 김영한의 실전 자바 중급 1편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-01"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 중급 1편</p>
+    <h1>1. (섹션 제목을 입력하세요)</h1>
+
+    <section>
+      <h2>핵심 개념</h2>
+      <p>여기에 섹션의 핵심 내용을 정리합니다.</p>
+    </section>
+
+    <section>
+      <h2>코드 예시</h2>
+      <pre><code>// 코드 스니펫
+public class Example {
+    public static void main(String[] args) {
+        System.out.println("hello");
+    }
+}</code></pre>
+    </section>
+
+    <section>
+      <h2>정리</h2>
+      <ul>
+        <li>요약 포인트 1</li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 중급 1편",
+      courseHome: "index.html",
+      currentId: "section-01",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>김영한의 실전 자바 - 중급 1편 | My Study</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root"></div>
+
+  <main class="content">
+    <p class="eyebrow">인프런 · 김영한</p>
+    <h1>실전 자바 - 중급 1편</h1>
+    <p>강의를 들으며 섹션별로 핵심 내용과 코드 예제를 정리한 노트입니다. 진행에 맞춰 섹션이 계속 추가됩니다.</p>
+
+    <h2>섹션 목록</h2>
+    <div id="section-list"></div>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initCourseIndexPage({ rootPath: "../" });
+    renderSectionList("#section-list", window.SECTIONS);
+  </script>
+</body>
+</html>

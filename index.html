@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Study</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root"></div>
+
+  <main class="content">
+    <h1>My Study</h1>
+    <p>강의를 들으며 정리한 학습 노트 모음입니다. 강의별로 폴더가 나뉘어 있고, 진행에 맞춰 섹션이 계속 추가됩니다.</p>
+
+    <div id="course-list" class="course-grid"></div>
+  </main>
+
+  <script src="assets/js/courses.js"></script>
+  <script src="assets/js/layout.js"></script>
+  <script>
+    initCourseIndexPage({ rootPath: "" });
+    renderCourseCards("#course-list");
+  </script>
+</body>
+</html>

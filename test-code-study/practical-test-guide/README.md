@@ -1,3 +1,7 @@
+> ⚠️ **이관 완료**: 이 문서의 정리 내용은 [GitHub Pages 사이트](https://leesg619.github.io/my-study/practical-test-guide/)로 이전되었습니다.
+> 앞으로 내용을 추가/수정할 때는 이 README가 아니라 사이트 쪽(`/practical-test-guide/section-*.html`)을 편집해주세요.
+> 이 파일은 이관 시점의 원문 보존용으로만 남겨둡니다.
+
 ## Practical Testing: 실용적인 테스트 가이드
 
 > 프로덕션 코드의 품질을 보장하는 탄탄한 테스트 코드 작성법  

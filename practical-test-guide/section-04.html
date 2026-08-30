@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4. Business Layer와 트랜잭션 - Practical Testing</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-04"></div>
+
+  <main class="content">
+    <p class="eyebrow">Practical Testing: 실용적인 테스트 가이드</p>
+    <h1>4. Business Layer와 트랜잭션</h1>
+
+    <h2>Business Layer</h2>
+    <p>비즈니스 로직을 구현하는 역할을 한다.</p>
+    <ul>
+      <li>Persistence Layer와의 상호작용(Data를 읽고 쓰는 행위)을 통해 비즈니스 로직을 전개시킨다.</li>
+      <li>트랜잭션을 보장해야 한다.</li>
+      <li>
+        Persistence Layer는 테스트 시 스프링 서버를 올려서 하지만 단위 테스트 느낌이 나고, Business Layer는 통합 테스트 시
+        Persistence Layer를 거칠 수밖에 없기 때문에 통합적인 느낌이 나는 것이다.
+      </li>
+    </ul>
+
+    <blockquote>
+      <p><strong>@Transactional 위험성</strong></p>
+      <p>
+        Service 단에 붙이지 않고 test 단에서만 <code>@Transactional</code>을 붙이면, 실제 프로덕션 코드에 적용돼야 할
+        <code>@Transactional</code>이 잘 동작한다고 착각해서 문제를 뒤늦게 발견할 수도 있다. 테스트 단에서의
+        <code>@Transactional</code>을 잘 사용해야 하고, 실수를 방지하려면 테스트 단에서 <code>@Transactional</code> 대신 아래
+        코드로 지워주는 방법도 있다.
+      </p>
+    </blockquote>
+
+    <pre><code>@AfterEach
+void tearDown(){
+    orderProductRepository.deleteAllInBatch();
+    productRepository.deleteAllInBatch();
+    orderRepository.deleteAllInBatch();
+    stockRepository.deleteAllInBatch();
+}</code></pre>
+
+    <p>결론: 쓰지 말자는 것이 아니라, 팀원 모두 부작용을 인지한 후에 잘 사용하는 것이 중요하다.</p>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "Practical Testing: 실용적인 테스트 가이드",
+      courseHome: "index.html",
+      currentId: "section-04",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

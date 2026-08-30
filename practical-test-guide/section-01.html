@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>1. 테스트 코드의 개요와 필요성 - Practical Testing</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-01"></div>
+
+  <main class="content">
+    <p class="eyebrow">Practical Testing: 실용적인 테스트 가이드</p>
+    <h1>1. 테스트 코드의 개요와 필요성</h1>
+
+    <h2>테스트 코드 개요</h2>
+    <h3>테스트 코드를 작성하지 않는다면</h3>
+    <ul>
+      <li>변화가 생기는 매순간마다 발생할 수 있는 모든 Case를 고려해야 한다.</li>
+      <li>변화가 생기는 매순간마다 모든 팀원이 동일한 고민을 해야 한다.</li>
+      <li>빠르게 변화하는 소프트웨어의 안정성을 보장할 수 없다.</li>
+    </ul>
+    <h3>올바른 테스트 코드는</h3>
+    <ul>
+      <li>자동화 테스트로 비교적 빠른 시간 안에 버그를 발견할 수 있고, 수동 테스트에 드는 비용을 크게 절약할 수 있다.</li>
+      <li>소프트웨어의 빠른 변화를 지원한다.</li>
+      <li>케이스 별 검증: 팀원들의 집단 지성을 팀 차원의 이익으로 승격시킨다.</li>
+      <li>가까이 보면 느리지만, 멀리 보면 가장 빠르다.</li>
+    </ul>
+
+    <h2>Practice: 요구사항</h2>
+    <ul>
+      <li>주문 목록에 음료 추가/삭제 기능</li>
+      <li>주문 목록 전체 지우기</li>
+      <li>주문 목록 총 금액 계산하기</li>
+      <li>주문 생성하기</li>
+      <li>한 종류의 음료 여러 잔을 한번에 담는 기능 추가</li>
+      <li>가게 운영 시간(10:00~22:00) 외에는 주문을 생성할 수 없다.</li>
+    </ul>
+
+    <h2>수동 테스트 vs 자동화된 테스트</h2>
+    <h3>수동 테스트</h3>
+    <ul>
+      <li>콘솔에 찍힌 글자를 보면서 테스트가 동작대로 가는지 체크 → 결국 최종 확인 주체가 사람이 되게 짠 코드</li>
+      <li>다른 사람이 이 테스트 코드를 봤을 때 뭘 검증해야 되는지, 어떤 게 맞는 상황이고 어떤 게 틀린 상황인지 알 수 없는 코드</li>
+    </ul>
+    <pre><code>void add(){
+    CafeKiosk cafeKiosk = new CafeKiosk();
+    cafeKiosk.add(new Americano());
+    System.out.println(">>> 담긴 음료 수 : " + cafeKiosk.getBeverages().size());
+    System.out.println(">>> 담긴 음료 : " + cafeKiosk.getBeverages().get(0).getName());
+}</code></pre>
+
+    <h3>단위 테스트</h3>
+    <ul>
+      <li>여러 테스트 기법 중 작은 코드 단위(클래스 or 메소드)를 독립적으로 검증하는 테스트</li>
+      <li>외부에 의존하지 않아 검증 속도가 빠르고, 안정적이다.</li>
+      <li>단위 테스트부터 일단 꼼꼼하게 잘 작성하는 것이 굉장히 중요하다.</li>
+    </ul>
+
+    <h3>자동화된 테스트 (JUnit 5)</h3>
+    <p>단위 테스트를 위한 테스트 프레임워크. <a href="https://junit.org/junit5" target="_blank" rel="noopener">junit.org/junit5</a></p>
+
+    <h3>AssertJ</h3>
+    <p>
+      테스트 코드 작성을 원활하게 돕는 테스트 라이브러리. 풍부한 API, 메서드 체이닝을 지원해 연이은 검증을 깔끔하게 작성할 수 있다.
+      <a href="https://joel-costigliola.github.io/assertj/index.html" target="_blank" rel="noopener">joel-costigliola.github.io/assertj</a>
+    </p>
+
+    <h2>테스트케이스 세분화</h2>
+    <h3>질문하기: 암묵적이거나 아직 드러나지 않은 요구사항이 있는지 항상 고민하기</h3>
+    <ul>
+      <li>해피 케이스</li>
+      <li>예외 케이스</li>
+    </ul>
+    <p>경계값이 존재하는 경우, <strong>경계값 테스트</strong>가 고려되어야 한다. → 범위(이상, 이하, 초과, 미만), 구간, 날짜 등</p>
+
+    <h3>테스트하기 어려운 영역</h3>
+    <ul>
+      <li>관측할 때마다 다른 값에 의존하는 코드 — 현재 날짜/시간, 랜덤 값, 전역 변수/함수, 사용자 입력 등</li>
+      <li>외부 세계에 영향을 주는 코드 — 표준 출력, 메시지 발송, 데이터베이스에 기록하기 등</li>
+      <li>이럴 땐 테스트하기 어려운 영역을 외부로 분리하는 것을 고려한다.</li>
+    </ul>
+
+    <h3>테스트하기 어려운 영역을 구분하고 분리하기</h3>
+    <ul>
+      <li>예) 요구사항: 가게 운영 시간(10:00~22:00) 외에는 주문을 생성할 수 없다.</li>
+      <li>테스트 시 <code>LocalDateTime.now</code>를 메소드 안에서 실행하면, 결국 테스트 코드가 시간대에 따라 성공/실패가 좌우된다 (untestable).</li>
+      <li>→ 테스트 코드는 테스트하고자 하는 영역을 넣어주고, 실제 production code에는 <code>LocalDateTime.now</code>를 넣어준다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "Practical Testing: 실용적인 테스트 가이드",
+      courseHome: "index.html",
+      currentId: "section-01",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Practical Testing: 실용적인 테스트 가이드 | My Study</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root"></div>
+
+  <main class="content">
+    <p class="eyebrow">인프런</p>
+    <h1>Practical Testing: 실용적인 테스트 가이드</h1>
+    <p>
+      프로덕션 코드의 품질을 보장하는 탄탄한 테스트 코드 작성법을 정리한 노트입니다.
+      스프링 &amp; JPA 기반 프로젝트에서의 테스트 코드 작성법, JUnit5·Mockito를 활용한
+      단위/통합 테스트, 레이어별 테스트 전략을 다룹니다.
+    </p>
+
+    <h2>섹션 목록</h2>
+    <div id="section-list"></div>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initCourseIndexPage({ rootPath: "../" });
+    renderSectionList("#section-list", window.SECTIONS);
+  </script>
+</body>
+</html>

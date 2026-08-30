@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3. 통합 테스트와 Persistence Layer - Practical Testing</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-03"></div>
+
+  <main class="content">
+    <p class="eyebrow">Practical Testing: 실용적인 테스트 가이드</p>
+    <h1>3. 통합 테스트와 Persistence Layer</h1>
+
+    <h2>통합 테스트</h2>
+    <ul>
+      <li>여러 모듈이 협력하는 기능을 통합적으로 검증하는 테스트 (예: 레이어드 아키텍처 검증)</li>
+      <li>단위 테스트만으로는 커버하기 어려운 영역들이 생기기 시작한다 (동작 순서 차이가 있거나 예기치 못한 결과가 나올 수 있음).</li>
+      <li>그래서 보통은 풍부한 단위 테스트 + 큰 기능 단위/시나리오 단위를 검증하는 통합 테스트, 이렇게 두 가지 관점으로 접근하면 좋다.</li>
+    </ul>
+
+    <h3>요구사항 (상품 조회 기능)</h3>
+    <ul>
+      <li>키오스크 주문을 위한 상품 후보 리스트 조회하기</li>
+      <li>상품의 판매 상태: 판매중, 판매보류, 판매중지</li>
+      <li>판매중, 판매보류인 상태의 상품을 화면에 보여준다.</li>
+      <li>id, 상품 번호, 상품 타입, 판매 상태, 상품 이름, 가격</li>
+    </ul>
+
+    <h2><code>JpaRepository</code>를 쓰는데 왜 테스트쿼리를 작성할까?</h2>
+    <p>Query Method를 사용하여 이름을 잘 지으면 쿼리가 잘 날아갈 것이 명확한데도 테스트를 작성하는 이유가 있다.</p>
+    <ul>
+      <li>간단한 쿼리는 예측이 쉽지만, where절 조건이 많아 쿼리 메서드가 길어지거나 파라미터를 잘못 줄 수 있다.</li>
+      <li>구현 기술 자체가 JPA가 아니라 <code>mybatis</code> / <code>jpql</code> / <code>querydsl</code> 등으로 바뀔 때를 대비해 보장하는 차원에서 작성한다.</li>
+      <li>JPA로 작성한 코드 자체가 미래에 어떻게 변환될지 모르기 때문에 작성해두는 것이 좋다.</li>
+      <li>
+        사실상 Repository Test는 단위 테스트 성격에 가까운 테스트다. 통합 테스트라 하여 스프링 서버를 띄워서 Repository를
+        테스트하지만, 레이어별로 끊어서 보면 DB에 access하는 계층은 그 로직만 갖고 있어서 기능 단위로는 단위 테스트 성격을 갖고 있다.
+      </li>
+    </ul>
+
+    <h2><code>@DataJpaTest</code> 소개</h2>
+    <p>
+      스프링 서버를 띄워서 테스트하지만, <code>@DataJpaTest</code>는 <code>@SpringBootTest</code>보다 가볍다. JPA 관련 빈들만
+      주입해서 서버를 띄워주기 때문에 속도가 더 빠르다. 결론적으로는 <code>@DataJpaTest</code>보다는 <code>@SpringBootTest</code>가
+      좀 더 선호된다.
+    </p>
+    <blockquote>
+      <p>assertThat 검증은 체이닝으로, profile을 지정해줘야 한다 (안 해주면 local로 인식해서 data.sql이 동작하는 이슈가 있었다).</p>
+    </blockquote>
+
+    <h3>참고 링크</h3>
+    <ul>
+      <li><a href="https://upcurvewave.tistory.com/600" target="_blank" rel="noopener">@Autowired vs @MockBean</a></li>
+      <li><a href="https://www.inflearn.com/questions/515588" target="_blank" rel="noopener">생성자 주입 선택 시 테스트 코드 작성의 장점?</a></li>
+      <li><a href="https://minkukjo.github.io/framework/2020/06/28/JUnit-23/" target="_blank" rel="noopener">생성자 주입 이슈</a></li>
+    </ul>
+
+    <h2>Persistence Layer</h2>
+    <h3>요구사항 (주문 생성 기능)</h3>
+    <ul>
+      <li>상품 번호 리스트를 받아 주문 생성하기</li>
+      <li>주문은 주문 상태, 주문 등록 시간을 가진다.</li>
+      <li>주문의 총 금액을 계산할 수 있어야 한다.</li>
+      <li>주문 생성 시 재고 확인 및 개수 차감 후 생성하기</li>
+      <li>재고는 상품번호를 가진다. 재고와 관련 있는 상품 타입은 병 음료, 베이커리이다.</li>
+    </ul>
+    <ul>
+      <li>Data Access의 역할을 담당한다.</li>
+      <li>비즈니스 가공 로직이 포함되어서는 안 된다.</li>
+      <li>Data에 대한 CRUD에만 집중한 레이어다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "Practical Testing: 실용적인 테스트 가이드",
+      courseHome: "index.html",
+      currentId: "section-03",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

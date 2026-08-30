@@ -172,6 +172,34 @@ a:hover {
   margin: 0 0 4px;
 }
 
+.content h3 {
+  font-size: 1.05rem;
+  margin-top: 1.6em;
+}
+
+.content ul,
+.content ol {
+  padding-left: 22px;
+}
+
+.content li {
+  margin: 4px 0;
+}
+
+.content blockquote {
+  margin: 16px 0;
+  padding: 10px 16px;
+  border-left: 3px solid var(--accent);
+  background: var(--bg-secondary);
+  border-radius: 0 8px 8px 0;
+  color: var(--text-muted);
+}
+
+.content blockquote p {
+  margin: 4px 0;
+  color: inherit;
+}
+
 /* ---------- Code blocks ---------- */
 
 code {

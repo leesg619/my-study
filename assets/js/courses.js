@@ -13,4 +13,10 @@ window.COURSES = [
     description: "인프런 김영한 강의. 섹션별 핵심 내용과 코드 예제를 정리합니다.",
     href: "java-intermediate-1/index.html",
   },
+  {
+    tag: "Testing",
+    title: "Practical Testing: 실용적인 테스트 가이드",
+    description: "인프런 강의. 스프링 & JPA 기반 프로젝트의 단위/통합 테스트 작성법을 정리합니다.",
+    href: "practical-test-guide/index.html",
+  },
 ];

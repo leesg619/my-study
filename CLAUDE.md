@@ -31,15 +31,16 @@ Pure static HTML/CSS/vanilla JS, no build step, no bundler, no npm — every pag
 3. Fill in the content (plain `h2`/`h3`/`ul`/`pre code`/`blockquote` — no markdown).
 4. Append `{ id, title, href }` to that course's `sections.js`.
 
-### Writing java-intermediate-1 notes from the lecture, not the PDF
+### Writing java-intermediate-1 notes: lecture-first, PDF as a fact-check
 
-`java-intermediate-1/java-intermediate-1-pdf/` holds copyrighted lecture slides from 김영한's "실전 자바 - 중급 1편" (Inflearn, `courseId: 333308`). Out of respect for the instructor, section pages must **not** be a transcription of these PDFs. Instead:
+`java-intermediate-1/java-intermediate-1-pdf/` holds copyrighted lecture slides from 김영한's "실전 자바 - 중급 1편" (Inflearn, `courseId: 333308`). Out of respect for the instructor, section pages must **not** be a transcription or paraphrase-of-the-slides. The lecture content (via MCP) is the primary source; the PDF may be opened only as a secondary accuracy check, never as the thing being rewritten:
 
 1. Call the Inflearn MCP's `get_curriculum` (courseId 333308) to map section/unit IDs — PDF chapter numbers don't line up 1:1 with video units (one PDF file can span several units, e.g. "1. Object 클래스" = units 212188–212198).
 2. Call `get_lecture_content` for each relevant unit. It returns a timestamped breakdown of what the instructor actually said — explanation flow, analogies, example code, verbatim quotes — not just slide text. Skip units that are just "문제와 풀이" (quiz) or pure environment setup.
 3. Write the section page by paraphrasing that explanation flow, examples, and reasoning in your own words. Keeping the instructor's underlying teaching structure (e.g. problem → limitation → solution, or bad-example → good-example) is fine and often correct when that's genuinely how the concept was taught — the thing to avoid is mechanically reproducing the MCP response's own `도입/본론/마무리` template on every section regardless of content.
-4. Match the site's existing bullet-heavy note style: `h2`/`h3` headings + short `<li>` bullets, `<strong>`/`<code>` for key terms, `→` arrows to show cause/effect, minimal prose paragraphs. See `spring-core-basic/section-01.html` as the reference style — do not write essay-style paragraphs even though the source material is conversational.
-5. Add a `<blockquote>` right under the `<h1>` crediting the instructor/course and stating the page is a personal paraphrase of the lecture, not a copy of the slides.
+4. Optionally, open the matching PDF (`java-intermediate-1-pdf/<N>. <제목>.pdf`) afterward to fact-check technical details the audio transcript tends to blur — exact method signatures, diagram structure, precise terminology — and correct the draft accordingly. Do not copy the PDF's wording, bullet structure, or layout; only use it to verify facts already written in your own words.
+5. Match the site's existing bullet-heavy note style: `h2`/`h3` headings + short `<li>` bullets, `<strong>`/`<code>` for key terms, `→` arrows to show cause/effect, minimal prose paragraphs. See `spring-core-basic/section-01.html` as the reference style — do not write essay-style paragraphs even though the source material is conversational.
+6. Add a `<blockquote>` right under the `<h1>` crediting the instructor/course and stating the page is a personal paraphrase of the lecture, not a copy of the slides.
 
 ### Adding a new course
 

@@ -20,7 +20,7 @@
     <h2>String 클래스 기본</h2>
     <ul>
       <li><code>char</code>는 문자 하나만 담는 기본형이라, 여러 문자를 다루려면 <code>char[]</code>를 써야 하는데 이건 다루기 불편하다. 자바는 그 불편함을 해소하려고 <code>String</code>을 제공한다.</li>
-      <li>생성 방법 두 가지: 리터럴(<code>String s1 = "hello";</code>)과 <code>new String("hello")</code>. 리터럴도 사실 내부적으로는 <code>new String()</code>과 개념적으로 같은 객체 생성으로 처리된다.</li>
+      <li>생성 방법 두 가지: 리터럴(<code>String s1 = "hello";</code>)과 <code>new String("hello")</code>. 리터럴은 <code>new</code>를 호출하지 않고 문자열 풀에 있는 기존 인스턴스를 그대로 참조한다 — 반면 <code>new String(...)</code>은 풀을 거치지 않고 매번 별도의 인스턴스를 힙에 새로 만든다.</li>
       <li><code>String</code>은 <code>public final class</code>로, 내부에 실제 문자열 데이터를 <code>char[]</code>(Java 9 이전) 또는 <code>byte[]</code>(Java 9 이후, 메모리 효율을 위해)로 감춰서 들고 있다.</li>
       <li><code>String</code>은 기본형이 아니라 <strong>참조형</strong>이다. <code>+</code> 연산자로 문자열을 이어붙이는 건 자바 언어가 특별히 허용해준 문법 — 원래 참조값끼리는 <code>+</code>를 할 수 없다.</li>
     </ul>

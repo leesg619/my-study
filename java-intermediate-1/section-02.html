@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 2 - 김영한의 실전 자바 중급 1편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-02"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 중급 1편</p>
+    <h1>2. 불변 객체</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 중급 1편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>기본형과 참조형의 공유</h2>
+    <ul>
+      <li><strong>기본형</strong>은 값을 복사해서 대입하므로 변수끼리 절대 공유되지 않는다 — <code>int b = a;</code> 후 <code>b</code>를 바꿔도 <code>a</code>는 그대로.</li>
+      <li><strong>참조형</strong>은 참조값을 복사해서 대입하므로, 여러 변수가 같은 인스턴스를 가리킬 수 있다 — <code>Address b = a;</code> 후 <code>b</code>의 값을 바꾸면 <code>a</code>도 같이 바뀐다.</li>
+      <li>둘 다 "값을 복사해서 대입한다"는 같은 원칙을 따르는데, 참조형은 그 값이 참조값이라서 결과적으로 인스턴스를 공유하게 되는 것.</li>
+    </ul>
+
+    <h2>공유 참조와 사이드 이펙트</h2>
+    <ul>
+      <li><strong>사이드 이펙트</strong>: <code>b</code>만 바꾸려 했는데 같은 인스턴스를 참조하는 <code>a</code>까지 같이 바뀌는 현상 — 의도한 작업 밖에서 예상 못한 부수 효과가 생기는 것.</li>
+      <li>근본 원인은 <strong>공유 참조</strong> 자체다. 여러 변수가 하나의 객체를 참조하면 한쪽 변경이 다른 쪽에 그대로 영향을 준다.</li>
+      <li>문제는 자바 문법상 공유 참조 자체를 강제로 막을 방법이 없다는 것 — 실수로 발생하기 쉽고, 복잡한 코드/여러 메서드 호출 속에서는 원인 찾기가 특히 어려워진다.</li>
+      <li>→ 근본적인 해결책은 공유를 막는 게 아니라, <strong>공유된 객체의 값 자체를 못 바꾸게</strong> 만드는 것.</li>
+    </ul>
+
+    <h2>불변 객체 도입</h2>
+    <ul>
+      <li><strong>불변 객체(Immutable Object)</strong>: 생성된 후 내부 값(필드)이 절대 바뀌지 않는 객체.</li>
+      <li>구현 방법: 필드를 <code>final</code>로 선언하고, 값을 바꾸는 메서드(<code>setValue</code> 등)를 아예 만들지 않는다.</li>
+      <li>값을 바꾸는 메서드가 없으므로 공유 참조가 있어도 사이드 이펙트가 원천적으로 발생하지 않는다.</li>
+      <li><strong>가변 객체</strong>(값 변경 가능)와 <strong>불변 객체</strong>(값 변경 불가)는 상황에 따라 선택 — 값을 바꿔야 하는 경우가 많으면 가변이 일반적이고, 값이 바뀌면 안 되는 특별한 경우에 불변을 쓴다.</li>
+    </ul>
+    <pre><code>class ImmutableAddress {
+    private final String value;
+
+    public ImmutableAddress(String value) {
+        this.value = value;
+    }
+
+    public String getValue() {
+        return value;
+    }
+    // setValue() 없음 — 값을 바꿀 방법 자체가 없다
+}</code></pre>
+
+    <h2>불변 객체 적용 예제</h2>
+    <ul>
+      <li><code>MemberV1</code>이 가변 <code>Address</code>를 갖는 경우: 회원 B의 주소를 바꾸려고 <code>memberB.getAddress().setValue("부산")</code>을 호출하면, 같은 <code>Address</code>를 공유하는 회원 A의 주소까지 "부산"으로 바뀐다.</li>
+      <li><code>MemberV2</code>가 <code>ImmutableAddress</code>를 갖는 경우: <code>setValue</code>가 아예 없으므로 값을 바꾸려는 시도 자체가 컴파일 오류가 된다.</li>
+      <li>→ 회원 B의 주소를 바꾸려면 <strong>새 <code>ImmutableAddress</code> 인스턴스를 만들어서</strong> <code>memberB.setAddress(new ImmutableAddress("부산"))</code>처럼 통째로 교체해야 한다. 이 경우 회원 A는 기존 주소를 그대로 유지한다.</li>
+    </ul>
+
+    <h2>불변 객체의 값 변경</h2>
+    <ul>
+      <li>불변 객체도 "값을 더한 결과"가 필요한 경우가 있다 — 이때는 <strong>자기 자신을 바꾸는 대신 새 객체를 만들어서 반환</strong>한다.</li>
+    </ul>
+    <pre><code>class ImmutableObj {
+    private final int value;
+
+    public ImmutableObj(int value) {
+        this.value = value;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public ImmutableObj add(int addValue) {
+        return new ImmutableObj(this.value + addValue); // 새 객체를 만들어 반환
+    }
+}</code></pre>
+    <ul>
+      <li>중요한 함정: <code>obj1.add(20)</code>만 호출하고 반환값을 받지 않으면 새로 만든 객체는 그냥 버려진다(GC 대상) — <code>obj1</code>은 여전히 원래 값 그대로다.</li>
+      <li>제대로 쓰려면 <code>ImmutableObj obj2 = obj1.add(20);</code>처럼 <strong>반드시 반환값을 받아서</strong> 써야 한다.</li>
+      <li>필드가 <code>final</code>이고 <code>setter</code>가 없으면 불변 클래스라고 판단할 수 있다. 그런 클래스의 "값 변경" 메서드를 보면 "아, 새 객체를 반환하겠구나"라고 바로 인지하는 게 중요하다.</li>
+    </ul>
+
+    <h2>정리</h2>
+    <ul>
+      <li>기본형은 값을 공유하지 않지만, 참조형은 참조값을 복사하므로 인스턴스를 공유할 수 있다.</li>
+      <li>공유 참조 자체는 막을 수 없다 — Side Effect는 "공유"가 아니라 "공유된 값의 변경"에서 생긴다.</li>
+      <li>불변 객체는 값 변경을 원천 차단해서 Side Effect를 근본적으로 없앤다 (<code>final</code> 필드 + setter 없음).</li>
+      <li><code>String</code>, <code>Integer</code>, <code>LocalDate</code> 등 자바의 핵심 클래스 다수가 불변으로 설계되어 있다.</li>
+      <li>불변 객체에서 "값 변경"은 곧 "새 객체 생성 + 반환"을 의미하며, 호출한 쪽은 반환값을 반드시 받아야 한다.</li>
+      <li>불변 객체는 값이 바뀔 때마다 새 객체를 생성하므로 가변 객체보다 성능이 불리할 수 있다 — 그래도 캐시/멀티스레드 안전성 등 다른 이유로도 불변 설계를 택하는 경우가 많다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 중급 1편",
+      courseHome: "index.html",
+      currentId: "section-02",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

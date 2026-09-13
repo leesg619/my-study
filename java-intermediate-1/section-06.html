@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 6 - 김영한의 실전 자바 중급 1편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-06"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 중급 1편</p>
+    <h1>6. 날짜와 시간</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 중급 1편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>날짜/시간 라이브러리가 필요한 이유</h2>
+    <ul>
+      <li>날짜 계산은 겉보기와 다르게 매우 복잡하다 — <strong>윤년</strong>(4년마다, 그런데 100년 단위는 예외, 400년 단위는 다시 예외), <strong>서머타임</strong>(나라·지역마다 적용 여부와 기간이 다름), <strong>타임존</strong>(지역마다 UTC 대비 오프셋이 다르고 서머타임까지 겹치면 더 복잡)이 얽혀 있다.</li>
+      <li>직접 날짜 계산 로직을 짜면 거의 확실히 어딘가 틀린다 — 그래서 잘 만들어진 라이브러리를 쓰는 게 사실상 필수다.</li>
+      <li>자바의 역사: <code>java.util.Date</code>(JDK 1.0, 타임존 지원 부족·가변 객체) → <code>java.util.Calendar</code>(JDK 1.1, 여전히 복잡하고 가변) → 오픈소스 <strong>Joda-Time</strong>(사용성 개선, 표준은 아님) → <strong><code>java.time</code></strong>(Java 8, Joda-Time 개발자가 참여해 만든 표준 API, 불변 객체로 설계).</li>
+      <li>실용적인 오픈소스가 검증되고 나서 표준이 되는 패턴은 ORM 쪽의 Hibernate → JPA 관계와도 닮아있다.</li>
+    </ul>
+
+    <h2>클래스 한눈에 보기</h2>
+    <ul>
+      <li><strong><code>LocalDate</code>/<code>LocalTime</code>/<code>LocalDateTime</code></strong>: "로컬" = 특정 지역의 시간대를 고려하지 않는다는 뜻. 국내 서비스처럼 단일 시간대만 다루면 충분.</li>
+      <li><strong><code>ZonedDateTime</code></strong>: <code>LocalDateTime</code> + 타임존 정보(<code>ZoneId</code>) — 서머타임까지 자동으로 고려한다. 해외와 시간 약속을 잡거나 사용자에게 실제 현지 시간을 보여줄 때 적합.</li>
+      <li><strong><code>OffsetDateTime</code></strong>: <code>ZonedDateTime</code>에서 <code>ZoneId</code> 대신 UTC 대비 고정 오프셋만 갖는다 — 서머타임을 반영하지 않는다.</li>
+      <li><strong><code>Instant</code></strong>: UTC 기준 1970-01-01 00:00:00부터 흐른 시간을 초 단위로만 표현하는 "기계 중심" 시간.</li>
+      <li><strong><code>Period</code></strong>(연/월/일 간격), <strong><code>Duration</code></strong>(시/분/초 간격) — "특정 시점"이 아니라 "시간의 양"을 표현.</li>
+    </ul>
+
+    <h2>기본 날짜/시간 — LocalDateTime</h2>
+    <ul>
+      <li><code>LocalDate.now()</code>/<code>LocalDate.of(y, m, d)</code>, <code>LocalTime.now()</code>/<code>LocalTime.of(h, m, s)</code>로 생성.</li>
+      <li><code>LocalDateTime</code>은 내부에 <code>LocalDate</code>와 <code>LocalTime</code>을 그대로 들고 있는 구조 — <code>toLocalDate()</code>/<code>toLocalTime()</code>으로 쪼개거나 <code>LocalDateTime.of(date, time)</code>으로 다시 합칠 수 있다.</li>
+      <li>모두 <strong>불변 객체</strong>다 — <code>plusDays()</code> 등은 원본을 바꾸지 않고 새 인스턴스를 반환하므로 반환값을 반드시 받아야 한다.</li>
+      <li>비교: <code>isBefore()</code>/<code>isAfter()</code>는 이름 그대로. <code>isEqual()</code>은 타임존이 달라도 "시간적으로 같으면" <code>true</code>, <code>equals()</code>는 타입·타임존 등 내부 구성까지 완전히 같아야 <code>true</code> — 단순히 시간이 같은지 보고 싶으면 <code>isEqual()</code>이 맞다.</li>
+    </ul>
+    <pre><code>LocalDateTime dt = LocalDateTime.of(2024, 1, 1, 9, 0, 0);
+LocalDateTime later = dt.plusDays(10); // dt는 그대로, later가 새 객체</code></pre>
+
+    <h2>타임존 — ZonedDateTime</h2>
+    <ul>
+      <li><code>ZoneId.of("Asia/Seoul")</code>처럼 문자열로 타임존을 얻는다. <code>ZoneId.getAvailableZoneIds()</code>로 전체 목록을, <code>ZoneId.systemDefault()</code>로 현재 시스템의 기본 타임존을 조회할 수 있다.</li>
+      <li><code>ZonedDateTime</code> = <code>LocalDateTime</code> + <code>ZoneId</code>. <code>withZoneSameInstant(다른Zone)</code>을 쓰면 "동일한 순간"을 다른 타임존 기준 시각으로 바꿔준다 (시각 자체가 그 지역 기준으로 재계산됨).</li>
+      <li><code>OffsetDateTime</code>은 <code>ZoneOffset.of("+09:00")</code>처럼 고정 오프셋만 사용 — 서머타임 자동 반영이 없다.</li>
+      <li>선택 기준: 실제 사용자 경험(회의 시간, 기념일 등)엔 <code>ZonedDateTime</code>, 로그 기록처럼 오프셋만 필요하고 서머타임을 신경 쓸 필요가 없으면 <code>OffsetDateTime</code>.</li>
+    </ul>
+
+    <h2>기계 중심의 시간 — Instant</h2>
+    <ul>
+      <li><strong>에포크 시간(유닉스 타임스탬프)</strong>: 1970-01-01 00:00:00 UTC부터 경과한 초. <code>Instant</code>는 내부에 이 초(+나노초)만 가지고 있다.</li>
+      <li>장점: 항상 UTC 기준이라 시간대에 독립적 — 전 세계 서버 로그를 같은 기준으로 남기거나, 서버 간 시간 동기화 기준점으로 쓰기 좋다.</li>
+      <li>단점: 사람이 읽기엔 불편하고, 날짜 계산 기능이 빈약하다(초 단위만 있어서 분·시간으로 바꾸려면 계산이 필요).</li>
+      <li><code>Instant.now()</code>, <code>Instant.from(zonedDateTime)</code>(단, <code>LocalDateTime</code>은 타임존 정보가 없어서 변환 불가), <code>Instant.ofEpochSecond(n)</code>, <code>getEpochSecond()</code>.</li>
+      <li>실무 기준: 기본은 <code>LocalDateTime</code>, 국제화가 필요하면 <code>ZonedDateTime</code>, UTC 기준 절대시간이 필요하면 <code>Instant</code>.</li>
+    </ul>
+
+    <h2>기간, 시간의 간격 — Period, Duration</h2>
+    <ul>
+      <li>시간은 "특정 시점"(예: 2024-01-01)과 "시간의 양"(예: 3개월)으로 나뉜다 — 전자는 <code>LocalDateTime</code>류, 후자는 <code>Period</code>/<code>Duration</code>.</li>
+      <li><code>Period</code>(연/월/일): <code>Period.ofDays(10)</code>으로 생성, <code>date.plus(period)</code>로 날짜에 더하기, <code>Period.between(start, end)</code>로 두 날짜 사이 간격 계산.</li>
+      <li><code>Duration</code>(시/분/초): <code>Duration.ofMinutes(30)</code>, <code>Duration.between(start, end)</code>로 두 시간 사이 차이 계산.</li>
+      <li><strong>메서드 이름 규칙</strong>: <code>Period</code>는 <code>getYears()</code>처럼 내부 값을 그대로 꺼내니 <code>get</code>, <code>Duration</code>은 내부에 초만 있어서 시/분으로 보려면 계산이 필요하니 <code>toHours()</code>/<code>toMinutes()</code>처럼 <code>to</code>를 쓴다.</li>
+    </ul>
+
+    <h2>핵심 인터페이스 — Temporal, ChronoUnit, ChronoField</h2>
+    <ul>
+      <li><strong><code>TemporalAccessor</code></strong>(읽기 전용, <code>get()</code>) ← <strong><code>Temporal</code></strong>(읽기+쓰기, <code>plus()</code>/<code>minus()</code>도 가능) — <code>LocalDateTime</code>·<code>ZonedDateTime</code>·<code>Instant</code> 등이 구현.</li>
+      <li><strong><code>TemporalAmount</code></strong> — <code>Period</code>·<code>Duration</code>이 구현. "시간의 양"을 나타내는 쪽.</li>
+      <li><strong><code>ChronoUnit</code></strong>(<code>TemporalUnit</code> 구현체): <code>SECONDS</code>, <code>DAYS</code> 등 "단위" — <code>ChronoUnit.SECONDS.between(a, b)</code>처럼 두 시점 차이를 특정 단위로 구할 때 쓴다.</li>
+      <li><strong><code>ChronoField</code></strong>(<code>TemporalField</code> 구현체): <code>YEAR</code>, <code>DAY_OF_MONTH</code> 등 "필드" — 날짜·시간 구조 안의 한 항목을 가리킨다.</li>
+      <li>이 인터페이스들 덕분에 <code>LocalDate</code>든 <code>ZonedDateTime</code>이든 <code>get()</code>/<code>plus()</code>/<code>minus()</code>를 똑같은 방식으로 쓸 수 있다 — 일관성 있는 API 설계의 예.</li>
+    </ul>
+
+    <h2>날짜/시간 조회하고 조작하기</h2>
+    <ul>
+      <li>조회: <code>dt.get(ChronoField.YEAR)</code>처럼 <code>ChronoField</code>로 직접 조회하거나, <code>getYear()</code>/<code>getMonthValue()</code> 같은 편의 메서드를 쓴다. 편의 메서드가 없는 필드(예: 하루 중 몇 번째 분)는 <code>get(ChronoField.MINUTE_OF_DAY)</code>처럼 직접 지정.</li>
+      <li>조작: <code>dt.plus(10, ChronoUnit.YEARS)</code>처럼 단위를 지정해서 더하거나, <code>Period</code>/<code>Duration</code> 객체를 만들어 <code>plus()</code>에 넘길 수도 있다. 당연히 불변이라 반환값을 받아야 한다.</li>
+      <li>타입이 지원하지 않는 필드를 조회하면 <code>UnsupportedFieldException</code>이 발생한다(예: <code>LocalDate</code>에서 초 단위 조회). 미리 <code>isSupported()</code>로 확인하면 예외를 피할 수 있다.</li>
+      <li><code>with(ChronoField.YEAR, 2020)</code>: 특정 필드 하나만 바꾼 새 객체를 만든다 ("커피 with 시럽"처럼 기존 것에 하나를 얹는 느낌).</li>
+      <li>복잡한 계산(다음 주 금요일, 이번 달 마지막 일요일 등)은 직접 로직을 짜지 말고 <strong><code>TemporalAdjusters</code></strong>를 쓴다 — <code>dt.with(TemporalAdjusters.next(DayOfWeek.FRIDAY))</code>, <code>dt.with(TemporalAdjusters.lastInMonth(DayOfWeek.SUNDAY))</code>.</li>
+    </ul>
+
+    <h2>문자열 파싱과 포맷팅</h2>
+    <ul>
+      <li><strong>포맷팅</strong>(객체→문자열): <code>DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")</code>로 패턴을 만들고 <code>date.format(formatter)</code>.</li>
+      <li><strong>파싱</strong>(문자열→객체): <code>LocalDate.parse(text, formatter)</code> — 입력 문자열의 실제 형식과 패턴이 정확히 일치해야 한다.</li>
+      <li>패턴 문자는 대소문자를 철저히 구분한다 — <code>MM</code>은 월, <code>mm</code>은 분(전혀 다른 의미!). <code>HH</code>는 24시간제, <code>hh</code>는 12시간제(<code>a</code>로 오전/오후 표시).</li>
+    </ul>
+
+    <h2>정리</h2>
+    <ul>
+      <li>날짜/시간 계산은 직접 하면 거의 확실히 버그가 생긴다 — <code>java.time</code> 패키지를 쓰는 게 기본.</li>
+      <li>국내 서비스라면 <code>LocalDateTime</code>이 기본 선택, 국제화가 필요하면 <code>ZonedDateTime</code>, UTC 기준 절대 시각이 필요하면 <code>Instant</code>.</li>
+      <li>"특정 시점"은 <code>Temporal</code>/<code>TemporalAccessor</code> 계열, "시간의 양"은 <code>TemporalAmount</code>(<code>Period</code>/<code>Duration</code>) 계열로 나뉜다.</li>
+      <li>모든 날짜/시간 클래스는 불변 — 변경 메서드는 항상 새 객체를 반환하므로 반환값을 받아써야 한다.</li>
+      <li>복잡한 날짜 계산은 <code>TemporalAdjusters</code> 같은 이미 구현된 도구를 활용하고, 문자열 변환은 <code>DateTimeFormatter</code>의 패턴 대소문자를 정확히 맞춘다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 중급 1편",
+      courseHome: "index.html",
+      currentId: "section-06",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

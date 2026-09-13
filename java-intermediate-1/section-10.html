@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 10 - 김영한의 실전 자바 중급 1편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-10"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 중급 1편</p>
+    <h1>10. 예외 처리 2 - 실습</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 중급 1편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>예외 처리 도입 — 체크 예외로 시작</h2>
+    <ul>
+      <li>9섹션에서 반환 값 기반 처리의 한계를 봤으니, 이제 같은 예제(<code>NetworkClient</code>/<code>NetworkService</code>)를 실제 <code>Exception</code>으로 리팩토링한다.</li>
+      <li>사용자 정의 체크 예외 <code>NetworkClientExceptionV2</code>를 만든다 — 예외도 결국 객체이므로 <code>errorCode</code>, <code>message</code> 같은 필드와 <code>getErrorCode()</code> 같은 메서드를 자유롭게 가질 수 있다.</li>
+      <li>연결/전송 실패 시 문자열을 반환하는 대신 <code>throw new NetworkClientExceptionV2(...)</code>로 던진다. 체크 예외이므로 메서드 시그니처에 <code>throws</code> 필수, 반환 타입도 더 이상 오류 코드를 담을 필요가 없어 <code>void</code>로 단순해진다.</li>
+      <li>하지만 아직 아무도 <code>catch</code>하지 않으므로, 예외가 <code>main</code>까지 전파되면 <strong>스택 트레이스</strong>를 출력하며 프로그램이 그대로 종료된다 — 스택 트레이스 자체는 "어디서 왜 터졌는지"를 알려주는 매우 유용한 정보.</li>
+    </ul>
+
+    <h2>예외 복구 — try-catch로 잡기</h2>
+    <ul>
+      <li><code>connect()</code>, <code>send()</code> 각각을 <code>try-catch</code>로 감싸고, <code>catch</code> 안에서 <code>e.getErrorCode()</code>/<code>e.getMessage()</code>로 로그를 남긴 뒤 <code>return</code>으로 메서드를 빠져나간다.</li>
+      <li>이렇게 하면 프로그램이 죽지 않고 다음 사용자 입력을 계속 받을 수 있다 — "폭탄을 해제"해서 정상 흐름으로 되돌리는 것.</li>
+      <li>다만 아직 문제가 남아있다: <code>connect</code> 따로, <code>send</code> 따로 <code>try-catch</code>를 감싸다 보니 정상 로직 사이사이에 예외 처리 코드가 끼어들어 <strong>가독성이 여전히 나쁘다</strong>.</li>
+    </ul>
+
+    <h2>정상 흐름과 예외 흐름 분리</h2>
+    <ul>
+      <li>해결책은 단순하다 — <code>connect</code>, <code>send</code>, <code>disconnect</code>를 <strong>하나의 <code>try</code> 블록 안에</strong> 다 넣고, <code>catch</code>는 그 아래 한 곳에 모은다.</li>
+      <li>이러면 <code>try</code>만 읽으면 "이 메서드가 정상일 때 어떤 순서로 동작하는지"가 한눈에 보이고, 문제가 생겼을 때 뭘 하는지는 <code>catch</code>만 보면 된다 — 정상 흐름과 예외 흐름의 명확한 물리적 분리.</li>
+    </ul>
+    <pre><code>try {
+    client.connect();
+    client.send(message);
+    client.disconnect();
+} catch (NetworkClientExceptionV2 e) {
+    log.error(e.getErrorCode(), e.getMessage());
+}</code></pre>
+
+    <h2>리소스 반환 문제 — 왜 disconnect가 또 문제인가</h2>
+    <ul>
+      <li>흐름은 깔끔해졌지만 더 심각한 구멍이 있다: 위 코드에서 <code>connect</code>나 <code>send</code>에서 <strong>예상 못 한 <code>RuntimeException</code></strong>이 터지면 어떻게 될까? 그 <code>catch</code>는 <code>NetworkClientExceptionV2</code>만 잡게 선언돼 있으므로 <code>RuntimeException</code>은 못 잡고 그대로 빠져나가 버린다 — 그 결과 <code>disconnect()</code>가 아예 호출되지 않는다.</li>
+      <li>모든 가능한 예외 타입에 대비해 <code>try-catch</code>를 계속 늘리는 건 답이 없다 — 예측 못 한 예외까지 완벽히 커버하는 건 사실상 불가능.</li>
+    </ul>
+
+    <h2>finally — 무조건 실행을 보장</h2>
+    <ul>
+      <li><strong><code>finally</code></strong> 블록은 <code>try</code>가 시작된 이상 <strong>어떤 경우에도 반드시 실행</strong>된다 — 정상 종료든, <code>catch</code>로 잡히는 예외든, <strong><code>catch</code>로도 못 잡는 예외</strong>든 상관없다. 후자의 경우 <code>finally</code>가 먼저 실행된 뒤에야 그 예외가 계속 밖으로 던져진다.</li>
+      <li><code>disconnect()</code>를 <code>finally</code>에 넣으면, 어떤 예외가 터지든 자원 해제가 100% 보장된다.</li>
+      <li><code>catch</code> 없이 <code>try-finally</code>만 쓰는 것도 가능하다 — 이 경우 예외 자체는 처리하지 않고 밖으로 넘기지만, 자원 해제만큼은 보장하고 싶을 때 쓴다.</li>
+    </ul>
+    <pre><code>try {
+    client.connect();
+    client.send(message);
+} catch (NetworkClientExceptionV2 e) {
+    log.error(e.getMessage());
+} finally {
+    client.disconnect(); // 무슨 일이 있어도 실행됨
+}</code></pre>
+
+    <h2>예외 계층 — 예외 자체를 세분화하기</h2>
+    <ul>
+      <li>지금까지는 <code>errorCode</code> 문자열로 "무슨 문제인지"를 구분했는데, 이걸 아예 <strong>예외 클래스 자체를 상속으로 나누는</strong> 방식으로 바꿀 수 있다: <code>NetworkClientExceptionV3</code>(최상위) ← <code>ConnectExceptionV3</code>(연결 실패, <code>address</code> 필드 보유) / <code>SendExceptionV3</code>(전송 실패, <code>sendData</code> 필드 보유).</li>
+      <li>예외도 객체이므로 상속 규칙이 그대로 적용된다 — 상위 타입으로 잡으면 모든 하위 예외를 한 번에, 하위 타입으로 따로 잡으면 그 예외만 세밀하게 처리 가능.</li>
+      <li>오류 코드 문자열 대신 예외 타입 자체와 그 예외 고유의 필드(<code>getAddress()</code>, <code>getSendData()</code>)로 상황을 표현하니 훨씬 명확하다.</li>
+    </ul>
+
+    <h2>예외 계층 활용 — catch 순서와 다중 catch</h2>
+    <ul>
+      <li>실전에서는 "중요한 예외는 구체적으로, 나머지는 뭉뚱그려서" 처리하는 게 합리적이다 — <code>ConnectException</code>은 따로 상세히 잡고, 그 외 네트워크 관련 예외는 상위 타입 <code>NetworkClientException</code>으로 묶어서 잡고, 진짜 예상 못 한 건 <code>Exception</code>으로 최종 방어.</li>
+      <li><strong>중요한 규칙</strong>: <code>catch</code>는 코드에 쓰인 순서대로 검사되므로, <strong>자식(구체적인) 예외를 먼저, 부모(포괄적인) 예외를 나중에</strong> 써야 한다. 순서를 반대로 하면 자식 예외는 영원히 잡히지 않는 죽은 코드가 되고, 자바는 이를 컴파일 오류로 잡아준다.</li>
+      <li><code>catch (ConnectException | SendException e)</code>처럼 <code>|</code>로 여러 예외를 한 <code>catch</code>에서 묶어 처리할 수도 있다 — 단, 이 경우 <code>e</code>로는 두 예외의 <strong>공통 부모에 있는 멤버만</strong> 쓸 수 있다.</li>
+      <li>예외를 너무 잘게 계층화하면 오히려 관리가 복잡해지는 트레이드오프가 있다 — 적당한 균형이 필요하다.</li>
+    </ul>
+
+    <h2>실무 예외 처리 방안 — 왜 체크 예외가 부담스러운가</h2>
+    <ul>
+      <li>현실: 네트워크 장애, DB 접속 실패 같은 문제는 애초에 <strong>개발자가 코드로 복구할 수 없는 경우</strong>가 대부분이다. 이런 예외는 잡아봐야 다시 던지는 것밖에 할 게 없다.</li>
+      <li>체크 예외를 쓰면, 여러 계층(라이브러리 → 서비스 → 컨트롤러)을 거칠 때마다 <code>throws</code> 목록에 그 예외를 계속 추가해야 한다 — 라이브러리가 많아질수록 이 부담이 눈덩이처럼 불어난다("체크 예외 지옥").</li>
+      <li>이 부담을 피하려고 <code>throws Exception</code>으로 뭉뚱그려버리는 건 최악의 선택 — 컴파일러의 예외 체크 기능 자체를 무력화시켜서, 정말 중요한 체크 예외까지 놓치게 된다.</li>
+      <li>대안: <strong>언체크(런타임) 예외를 기본으로 사용</strong>한다 — 해결 못 하는 예외는 <code>throws</code> 선언 없이 그냥 위로 흘려보내고, 해결할 수 있는 예외만 개발자가 선택적으로 <code>catch</code>한다.</li>
+    </ul>
+
+    <h2>실무 예외 처리 방안 — 공통 처리 구현</h2>
+    <ul>
+      <li>예외 클래스들을 <code>Exception</code> 대신 <strong><code>RuntimeException</code></strong>을 상속하게 바꾸면 <code>throws</code> 선언이 전부 필요 없어진다 — 서비스 코드는 본연의 로직에만 집중할 수 있다.</li>
+      <li>해결 못 하는 예외는 계층마다 처리하지 말고, <strong>애플리케이션 한 곳(공통 처리부)</strong>에서 <code>catch (Exception e)</code>로 모아 처리한다 — 사용자에게는 친절한 안내 메시지, 개발자에게는 <code>e.printStackTrace()</code> 등으로 상세 로그.</li>
+      <li><code>instanceof</code>로 예외 타입을 구분해서 공통 처리부 안에서도 타입별 추가 대응이 가능하다.</li>
+      <li>실무에서는 <code>printStackTrace()</code> 대신 SLF4J/Logback 같은 로깅 라이브러리로 파일에도 로그를 남기는 게 일반적이지만, 학습 단계에서는 <code>printStackTrace()</code>로 충분하다.</li>
+      <li>최근 자바 라이브러리·오픈소스 대부분이 체크 예외보다 언체크 예외를 기본으로 채택하는 추세다.</li>
+    </ul>
+
+    <h2>try-with-resources</h2>
+    <ul>
+      <li><code>finally</code>에서 자원을 닫는 패턴이 반복되는 걸 줄이기 위해 Java 7에서 도입된 문법. 자원 클래스가 <strong><code>AutoCloseable</code></strong> 인터페이스(<code>close()</code> 메서드)를 구현하면, <code>try(...)</code> 괄호 안에서 선언한 인스턴스는 <code>try</code> 블록을 벗어나는 즉시 <code>close()</code>가 자동 호출된다.</li>
+      <li><code>catch</code>가 없어도 동작한다 — <code>close()</code> 호출은 예외 발생 여부와 무관하게 보장된다.</li>
+      <li>실행 순서가 미묘하게 다르다: 예외가 나면 <code>catch</code>로 가기 <strong>전에</strong> 먼저 <code>close()</code>가 호출된다. 자원을 최대한 빨리 반납하기 위한 설계.</li>
+      <li>장점 3가지: <strong>리소스 누수 방지</strong>(닫는 걸 깜빡할 수가 없음), <strong>코드 간결화</strong>(명시적 <code>close()</code> 호출 불필요), <strong>스코프 축소</strong>(자원 변수가 <code>try</code> 블록 밖에서 실수로 쓰일 일이 없음).</li>
+    </ul>
+    <pre><code>class NetworkClientV5 implements AutoCloseable {
+    @Override
+    public void close() {
+        disconnect();
+    }
+}
+
+try (NetworkClientV5 client = new NetworkClientV5(address)) {
+    client.connect();
+    client.send(message);
+} catch (NetworkClientExceptionV3 e) {
+    log.error(e.getMessage());
+} // client.close()가 여기서 자동 호출됨</code></pre>
+
+    <h2>정리</h2>
+    <ul>
+      <li>반환 값 → 체크 예외 도입 → <code>try-catch</code> 복구 → 정상/예외 흐름 분리(하나의 <code>try</code>) → <code>finally</code>로 자원 해제 보장, 순서로 코드가 계속 개선되어 왔다.</li>
+      <li>예외를 상속으로 계층화하면 타입 자체가 문제 상황을 설명하고, 상위/하위 타입을 조합해 유연하게 잡을 수 있다 — 단, <code>catch</code>는 자식이 먼저, 부모가 나중이어야 한다.</li>
+      <li>실무에서는 대부분의 예외가 복구 불가능하므로, <strong>언체크 예외 + 공통 예외 처리</strong>가 표준적인 접근이다. <code>throws Exception</code>으로 눙치는 건 컴파일러의 체크 기능을 무력화하는 최악의 선택.</li>
+      <li><code>try-with-resources</code>는 <code>finally</code>에서 자원을 닫던 패턴을 <code>AutoCloseable</code>로 자동화한 것 — 실무에서 자원 관리는 이 방식이 기본.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 중급 1편",
+      courseHome: "index.html",
+      currentId: "section-10",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

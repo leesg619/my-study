@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 5 - 김영한의 실전 자바 중급 1편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-05"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 중급 1편</p>
+    <h1>5. 열거형 - ENUM</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 중급 1편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>문자열의 타입 안전성 문제</h2>
+    <ul>
+      <li>회원 등급(BASIC/GOLD/DIAMOND)을 <code>String</code>으로 받아 <code>if-else</code>로 할인율을 분기하는 코드는 오타("Gold"→"gold"), 존재하지 않는 값("VIP") 같은 실수를 컴파일러가 잡아주지 못한다 — 전부 런타임에야 드러난다.</li>
+      <li><code>static final</code> 문자열 상수(<code>StringGrade.GOLD</code> 등)를 만들어도 근본 해결은 아니다. 매개변수 타입이 여전히 <code>String</code>이라, 상수를 안 쓰고 아무 문자열이나 직접 넣는 것 자체를 막을 방법이 없다.</li>
+      <li>→ 문제의 본질은 "매개변수를 <code>String</code>으로 받았다"는 설계 자체에 있다. <code>String</code> 대신 <strong>그 타입만이 가질 수 있는 값들을 언어 차원에서 제한</strong>해야 근본적으로 해결된다.</li>
+    </ul>
+
+    <h2>타입 안전 열거형 패턴</h2>
+    <ul>
+      <li>자바 Enum이 생기기 전, 개발자들이 직접 만들어 쓰던 패턴이다. 핵심 아이디어: 클래스 안에 <code>static final</code>로 정해진 인스턴스들만 만들어두고, 그 인스턴스만 쓰게 강제한다.</li>
+      <li><code>private</code> 생성자로 외부에서 <code>new ClassGrade()</code>를 못 하게 막아야 완성된다 — 그렇지 않으면 누군가 임의로 인스턴스를 만들어 넘겼을 때 미리 정의된 상수와 참조값이 달라 비교(<code>==</code>)가 깨진다.</li>
+    </ul>
+    <pre><code>class ClassGrade {
+    static final ClassGrade BASIC = new ClassGrade();
+    static final ClassGrade GOLD = new ClassGrade();
+    static final ClassGrade DIAMOND = new ClassGrade();
+
+    private ClassGrade() {} // 외부 생성 차단
+}</code></pre>
+    <ul>
+      <li>이 패턴은 타입 안전성은 확보하지만, 상수마다 이렇게 손으로 다 작성해야 해서 코드가 장황해진다는 단점이 있다.</li>
+    </ul>
+
+    <h2>자바 Enum — 패턴의 언어 차원 지원</h2>
+    <ul>
+      <li><code>enum</code>은 타입 안전 열거형 패턴을 언어가 대신 구현해주는 것 — <code>class</code> 자리에 <code>enum</code>을 쓰고 상수 이름만 나열하면 끝이다.</li>
+      <li>사실상 <code>Grade</code> 같은 열거형도 클래스다. 자동으로 <code>java.lang.Enum</code>을 상속받고, 생성자는 자동으로 <code>private</code>이라 <code>new Grade()</code>는 컴파일 오류.</li>
+      <li>각 상수(<code>Grade.BASIC</code> 등)는 서로 다른 참조값을 가진 고유 인스턴스 — 타입 안전 열거형 패턴에서 인스턴스를 만들던 것과 똑같은 그림이다.</li>
+      <li>상수는 <code>static</code>이므로 <code>static import</code>를 쓰면 <code>Grade.BASIC</code> 대신 <code>BASIC</code>만으로 쓸 수 있어 더 간결해진다.</li>
+      <li>장점 3가지: <strong>타입 안전성</strong>(정의된 상수 외엔 애초에 불가능), <strong>간결함</strong>(패턴을 직접 구현할 필요 없음), <strong>확장성</strong>(새 등급 추가가 쉬움).</li>
+    </ul>
+    <pre><code>enum Grade {
+    BASIC, GOLD, DIAMOND
+}</code></pre>
+
+    <h2>주요 메서드</h2>
+    <ul>
+      <li>모든 열거형은 <code>java.lang.Enum</code>을 상속받아 아래 메서드를 기본으로 갖는다.</li>
+      <li><code>values()</code>: 모든 상수를 배열로 반환. <code>Arrays.toString()</code>과 같이 쓰면 보기 좋게 출력된다.</li>
+      <li><code>name()</code>: 상수의 이름을 문자열로 반환.</li>
+      <li><code>valueOf(String)</code>: 문자열과 일치하는 상수를 찾아 반환 — 일치하는 게 없으면 <code>IllegalArgumentException</code>.</li>
+      <li><code>toString()</code>: 기본은 <code>name()</code>과 같지만, 오버라이딩해서 다른 표현으로 바꿀 수 있다.</li>
+      <li><code>ordinal()</code>: 선언 순서를 0부터 매긴 정수. <strong>절대 DB나 파일에 저장하는 용도로 쓰면 안 된다</strong> — 나중에 상수 선언 순서를 바꾸거나 중간에 새 상수를 끼워 넣으면 기존에 저장해둔 값과 실제 의미가 어긋나는 치명적인 버그가 된다.</li>
+      <li>Enum은 이미 <code>java.lang.Enum</code>을 상속하고 있어서 다른 클래스를 추가로 상속받을 수는 없지만, 인터페이스 구현은 가능하고 익명 클래스 방식으로 상수마다 다른 동작(추상 메서드 구현)을 줄 수도 있다.</li>
+    </ul>
+
+    <h2>리팩토링으로 보는 Enum의 진짜 가치</h2>
+    <ul>
+      <li><strong>1단계</strong>: 할인율 계산 로직이 <code>DiscountService</code>의 <code>if-else</code>에 흩어져 있던 것을, <code>Grade</code>(또는 <code>ClassGrade</code>) 안에 <code>discountPercent</code> 필드 + 생성자로 옮긴다. <code>Grade.BASIC(10)</code>처럼 상수 선언 시 생성자를 호출하는 문법을 쓴다.</li>
+      <li>주의: 열거형 안에 필드·생성자·메서드가 들어가면, 상수 나열이 끝나는 지점에 <strong>세미콜론</strong>을 반드시 붙여야 한다.</li>
+      <li><strong>2단계</strong>: <code>Grade</code>에 <code>getDiscountPercent()</code> 메서드를 추가해서 외부(<code>DiscountService</code>)가 필드를 직접 들여다보지 않고 메서드로 값을 얻게 한다.</li>
+      <li><strong>3단계</strong>: 아예 할인 <em>금액 계산</em> 로직(가격 × 할인율)까지 <code>Grade</code> 내부의 <code>discount(price)</code> 메서드로 옮기면, <code>DiscountService</code> 클래스 자체가 필요 없어진다 — 캡슐화 관점에서 "자기 데이터로 하는 계산은 자기가 갖는다"는 원칙에 부합.</li>
+      <li>여러 등급의 할인율을 출력할 때 등급 하나하나를 나열하는 대신 <code>Grade.values()</code>로 반복문을 돌리면, 새 등급이 추가돼도 출력 코드를 고칠 필요가 없다.</li>
+    </ul>
+    <pre><code>enum Grade {
+    BASIC(10), GOLD(20), DIAMOND(30);
+
+    private final int discountPercent;
+
+    Grade(int discountPercent) {
+        this.discountPercent = discountPercent;
+    }
+
+    public int discount(int price) {
+        return price * discountPercent / 100;
+    }
+}</code></pre>
+
+    <h2>정리</h2>
+    <ul>
+      <li><code>String</code>으로 값의 범위를 제한하려는 시도(상수 도입 포함)는 근본적인 해결책이 되지 못한다 — 타입 자체가 아무 문자열이나 받아들이기 때문.</li>
+      <li>타입 안전 열거형 패턴(<code>static final</code> 인스턴스 + <code>private</code> 생성자)이 이 문제의 원조 해법이고, 자바 <code>enum</code>은 이 패턴을 언어 차원에서 간결하게 지원한 것.</li>
+      <li>Enum도 클래스이므로 필드·생성자·메서드를 가질 수 있고, 데이터와 그 데이터를 다루는 로직을 한 곳에 응집시킬 수 있다 (할인율 계산 예제처럼).</li>
+      <li><code>ordinal()</code>은 절대 영속 데이터로 쓰지 말 것 — 상수 선언 순서가 바뀌면 값이 통째로 어긋난다.</li>
+      <li>좋은 프로그래밍은 곧 "제약이 있는 프로그래밍" — Enum은 허용되는 값의 범위를 명확히 제한해서 실수를 원천 차단하는 장치다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 중급 1편",
+      courseHome: "index.html",
+      currentId: "section-05",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

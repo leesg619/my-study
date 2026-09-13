@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 8 - 김영한의 실전 자바 중급 1편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-08"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 중급 1편</p>
+    <h1>8. 중첩 클래스, 내부 클래스 2</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 중급 1편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>지역 클래스</h2>
+    <ul>
+      <li>지역 변수와 같은 위치, 즉 <strong>코드 블록(메서드) 안</strong>에 정의하는 내부 클래스의 한 종류다. 내부 클래스이므로 바깥 클래스의 인스턴스 멤버에 접근 가능한 건 그대로 가지고, 거기에 더해 자신이 속한 코드 블록의 <strong>지역 변수·매개변수</strong>에도 접근할 수 있다.</li>
+      <li>지역 변수처럼 취급되기 때문에 <code>private</code>/<code>public</code> 같은 접근 제어자는 붙일 수 없다.</li>
+      <li>그래도 결국 클래스이므로 인터페이스 구현이나 클래스 상속이 그대로 가능하다 — "내부 클래스든 지역 클래스든 다 그냥 클래스"라는 게 핵심.</li>
+    </ul>
+
+    <h2>지역 변수 캡처</h2>
+    <ul>
+      <li>변수 생명 주기 비교: 클래스 변수(프로그램 종료까지) &gt; 인스턴스 변수(인스턴스가 살아있는 동안, 힙) &gt; <strong>지역 변수(메서드 호출 동안만, 스택)</strong> — 지역 변수가 압도적으로 짧다.</li>
+      <li>문제 상황: 지역 클래스 인스턴스를 만들어서 메서드 밖으로 반환하면, 그 인스턴스(힙에 있음)는 원래 메서드가 끝난 뒤에도 계속 살아있을 수 있다. 그런데 그 인스턴스가 참조하던 지역 변수(스택에 있던 것)는 메서드 종료와 함께 이미 사라진 상태 — 그런데도 실행해보면 값이 멀쩡히 출력된다. 왜?</li>
+      <li>답은 <strong>지역 변수 캡처</strong>다: 지역 클래스의 인스턴스를 생성하는 시점에, 그 인스턴스가 필요로 하는 지역 변수의 <strong>값을 복사해서 인스턴스 내부 필드로 저장</strong>해둔다 (스크린샷처럼 그 순간의 값을 찍어두는 것). 이후 그 변수에 접근하는 건 스택의 원본이 아니라 인스턴스 안에 캡처되어 저장된 사본이다.</li>
+      <li>실제로 <code>getClass().getDeclaredFields()</code>로 까보면, 코드에는 없던 필드가 자동으로 생성되어 캡처한 지역 변수 값과 바깥 인스턴스 참조를 들고 있는 걸 확인할 수 있다.</li>
+    </ul>
+    <pre><code>Printer process(int paramVar) {
+    int localVar = 10;
+    class LocalPrinter {
+        void print() {
+            System.out.println(paramVar + localVar); // 캡처된 사본을 사용
+        }
+    }
+    return new LocalPrinter(); // 여기서 캡처가 일어남
+}</code></pre>
+
+    <h2>캡처한 지역 변수는 왜 final/사실상 final이어야 하나</h2>
+    <ul>
+      <li>자바 규칙: 지역 클래스가 접근하는 지역 변수는 <code>final</code>이거나 <strong>사실상 final(effectively final)</strong>이어야 한다 — <code>final</code>을 안 붙였어도 중간에 값이 한 번도 안 바뀌었다면 인정.</li>
+      <li>이유: 만약 값 변경을 허용하면, 스택의 원본 값과 인스턴스에 캡처된 사본 값을 계속 동기화해야 하는 문제가 생긴다. 이건 구현이 복잡해질 뿐 아니라, 개발자가 예상 못한 곳에서 값이 바뀌는 사이드 이펙트, 멀티스레드 상황에서의 동기화 비용까지 줄줄이 딸려온다.</li>
+      <li>자바의 선택은 단순하다 — 아예 <strong>변경 자체를 막아버린다</strong>. 값이 바뀌지 않는다고 보장되면 캡처된 사본과 원본이 어긋날 일도 없다. 값을 바꿔야 한다면 캡처된 변수를 억지로 수정하려 하지 말고 새 변수를 선언해서 쓰는 게 맞는 방향이다.</li>
+    </ul>
+
+    <h2>익명 클래스</h2>
+    <ul>
+      <li><strong>익명 클래스(anonymous class)</strong> = 이름 없는 지역 클래스. 일반적으로 클래스는 "선언"과 "생성(<code>new</code>)"이 분리되는데, 익명 클래스는 이 둘을 한 번에 처리한다.</li>
+      <li><code>new Printer() { ... }</code>에서 <code>Printer</code>는 인스턴스를 만드는 게 아니라, "이 타입을 상속/구현하는 이름 없는 클래스를 지금 정의하고 바로 생성한다"는 뜻이다. <code>{}</code> 안이 그 클래스의 본문.</li>
+      <li>내부적으로는 <code>Outer$1</code>, <code>Outer$2</code>처럼 숫자로 자동 명명된다.</li>
+      <li>중요한 제약: 익명 클래스는 <strong>그 자리에서 딱 한 번만 인스턴스를 만들 수 있다</strong> — 같은 익명 클래스를 여러 번 생성해야 한다면 이름 있는 지역 클래스를 써야 한다.</li>
+    </ul>
+    <pre><code>Printer printer = new Printer() {
+    @Override
+    public void print() {
+        System.out.println("익명 클래스 구현");
+    }
+};</code></pre>
+
+    <h2>익명 클래스 활용 — 변하는 것과 변하지 않는 것의 분리</h2>
+    <ul>
+      <li>중복 제거·재사용성 향상의 핵심 원리: <strong>변하지 않는 부분</strong>(예: "프로그램 시작"/"프로그램 종료" 출력)은 그대로 두고, <strong>변하는 부분</strong>(예: 실제 출력할 문자열)만 외부에서 전달받게 만든다.</li>
+      <li>변하는 게 단순 데이터(문자열, 숫자)라면 매개변수로 충분히 해결된다.</li>
+      <li>그런데 변하는 게 <strong>코드 조각(로직 자체)</strong>이라면? 메서드 자체를 값처럼 전달할 방법이 자바 8 이전엔 없었다 — 그래서 "그 로직을 담은 메서드를 가진 인스턴스"를 대신 전달한다. 인터페이스(예: <code>Processor</code>, <code>run()</code>)를 하나 만들고, 구현체를 매개변수로 넘겨서 <code>run()</code>을 호출하게 하는 방식 — 이게 바로 다형성을 이용한 "코드 조각 전달"이다.</li>
+      <li>이 구현체를 익명 클래스로 그 자리에서 바로 만들어 넘기면, 별도 클래스 파일이나 변수 선언 없이 코드가 한결 간결해진다.</li>
+    </ul>
+    <pre><code>hello(new Processor() {
+    @Override
+    public void run() {
+        System.out.println("주사위: " + (int) (Math.random() * 6 + 1));
+    }
+});</code></pre>
+
+    <h2>자바 8 람다로의 발전</h2>
+    <ul>
+      <li>자바 8 이전엔 메서드 인수로 기본형이나 참조형(인스턴스)만 넘길 수 있었다 — "코드 조각 자체"를 넘기려면 익명 클래스로 감싸는 수밖에 없었다.</li>
+      <li>자바 8부터는 <strong>람다 표현식</strong>이 등장해서, 인터페이스 구현+인스턴스 생성이라는 우회 없이 함수(코드 블록) 자체를 값처럼 바로 전달할 수 있게 됐다.</li>
+      <li>익명 클래스와 람다의 차이: 익명 클래스는 클래스이므로 <strong>멤버 변수를 가질 수 있지만</strong>, 람다는 클래스가 아니라서 멤버 변수를 가질 수 없다. 단순 코드 조각 전달에는 람다가 훨씬 간결하고, 상태(필드)를 가져야 하는 경우엔 익명 클래스가 필요하다.</li>
+    </ul>
+
+    <h2>정리</h2>
+    <ul>
+      <li>중첩 클래스의 갈래: 정적 중첩 클래스(바깥 인스턴스와 무관) / 내부 클래스(바깥 인스턴스에 소속) → 내부 클래스 중에서도 코드 블록 안에 있으면 지역 클래스, 이름이 없으면 익명 클래스.</li>
+      <li>지역 클래스·익명 클래스가 지역 변수에 접근할 수 있는 건 <strong>지역 변수 캡처</strong> 덕분 — 접근 시점에 값을 복사해서 인스턴스 안에 저장해두기 때문에 원본 지역 변수가 사라져도 문제없다.</li>
+      <li>캡처된 지역 변수가 <code>final</code>/사실상 final이어야 하는 이유는 스택 원본과 캡처된 사본 사이의 동기화 문제·사이드 이펙트를 원천 차단하기 위함이다.</li>
+      <li>익명 클래스는 "이름 없이 선언+생성을 한 번에" 처리하는 지역 클래스 — 일회성 구현체를 그 자리에서 바로 만들 때 유용하다.</li>
+      <li>코드 조각을 값처럼 전달하고 싶을 때, 자바 8 이전엔 익명 클래스, 이후엔 람다가 더 간결한 선택지가 됐다 — 다만 멤버 변수(상태)가 필요하면 여전히 익명 클래스를 쓴다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 중급 1편",
+      courseHome: "index.html",
+      currentId: "section-08",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

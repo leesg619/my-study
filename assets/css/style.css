@@ -5,39 +5,39 @@
    ========================================================= */
 
 :root {
-  --bg: #ffffff;
-  --bg-secondary: #f5f6f8;
-  --text: #1a1d23;
-  --text-muted: #5b6270;
-  --accent: #2f6fed;
+  --bg: #fbfdfa;
+  --bg-secondary: #eef3ea;
+  --text: #1b2420;
+  --text-muted: #5c6b60;
+  --accent: #2f7a4f;
   --accent-contrast: #ffffff;
-  --border: #e2e4e9;
-  --code-bg: #f0f1f4;
-  --code-text: #b3261e;
+  --border: #dbe6dc;
+  --code-bg: #eef1e9;
+  --code-text: #a3401f;
   --card-bg: #ffffff;
-  --card-shadow: rgba(15, 23, 42, 0.08);
-  --header-bg: #ffffffee;
-  --link: #2f6fed;
-  --link-visited: #6f4fd8;
+  --card-shadow: rgba(31, 61, 42, 0.08);
+  --header-bg: #fbfdfaee;
+  --link: #2f7a4f;
+  --link-visited: #4f7a4a;
   --max-width: 860px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #14161a;
-    --bg-secondary: #1b1e24;
-    --text: #e6e8eb;
-    --text-muted: #9aa1ac;
-    --accent: #6ea2ff;
-    --accent-contrast: #0b1220;
-    --border: #2a2e37;
-    --code-bg: #1e2129;
-    --code-text: #ff9b8a;
-    --card-bg: #1c1f26;
+    --bg: #121613;
+    --bg-secondary: #182019;
+    --text: #e5ece7;
+    --text-muted: #9bab9f;
+    --accent: #6fc98d;
+    --accent-contrast: #0b1a10;
+    --border: #263029;
+    --code-bg: #1a211c;
+    --code-text: #ff9b7a;
+    --card-bg: #171e19;
     --card-shadow: rgba(0, 0, 0, 0.45);
-    --header-bg: #14161acc;
-    --link: #6ea2ff;
-    --link-visited: #b39ddb;
+    --header-bg: #12161388;
+    --link: #6fc98d;
+    --link-visited: #9bcf9b;
   }
 }
 
@@ -276,10 +276,13 @@ pre code {
   border-radius: 12px;
   padding: 18px 20px;
   box-shadow: 0 1px 3px var(--card-shadow);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
 .course-card:hover {
   border-color: var(--accent);
+  box-shadow: 0 6px 16px var(--card-shadow);
+  transform: translateY(-2px);
   text-decoration: none;
 }
 

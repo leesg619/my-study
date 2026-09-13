@@ -1,7 +1,8 @@
 /* =========================================================
    My Study — shared site stylesheet
    Used by every page under the repo root and course folders.
-   Light/dark handled via prefers-color-scheme + CSS variables.
+   Light theme is fixed regardless of system prefers-color-scheme
+   (dark mode looked worse than light for this site, so it's off).
    ========================================================= */
 
 :root {
@@ -20,25 +21,6 @@
   --link: #2f7a4f;
   --link-visited: #4f7a4a;
   --max-width: 860px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #121613;
-    --bg-secondary: #182019;
-    --text: #e5ece7;
-    --text-muted: #9bab9f;
-    --accent: #6fc98d;
-    --accent-contrast: #0b1a10;
-    --border: #263029;
-    --code-bg: #1a211c;
-    --code-text: #ff9b7a;
-    --card-bg: #171e19;
-    --card-shadow: rgba(0, 0, 0, 0.45);
-    --header-bg: #12161388;
-    --link: #6fc98d;
-    --link-visited: #9bcf9b;
-  }
 }
 
 * {

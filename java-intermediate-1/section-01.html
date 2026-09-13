@@ -11,29 +11,119 @@
 
   <main class="content">
     <p class="eyebrow">김영한의 실전 자바 - 중급 1편</p>
-    <h1>1. (섹션 제목을 입력하세요)</h1>
+    <h1>1. Object 클래스</h1>
 
-    <section>
-      <h2>핵심 개념</h2>
-      <p>여기에 섹션의 핵심 내용을 정리합니다.</p>
-    </section>
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 중급 1편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
 
-    <section>
-      <h2>코드 예시</h2>
-      <pre><code>// 코드 스니펫
-public class Example {
-    public static void main(String[] args) {
-        System.out.println("hello");
+    <h2>java.lang 패키지</h2>
+    <ul>
+      <li>자바 언어 자체를 이루는 가장 기본 클래스 모음 (<code>Object</code>, <code>String</code>, 래퍼 타입, <code>Class</code>, <code>System</code> 등).</li>
+      <li>모든 자바 프로그램에서 <strong>자동 임포트</strong>되므로 <code>import</code> 구문이 필요 없다 — 그만큼 언어 자체의 일부로 취급된다는 뜻.</li>
+      <li>이 패키지를 이해하는 것 = 자바라는 언어 자체를 이해하는 것.</li>
+    </ul>
+
+    <h2>Object = 모든 클래스의 최상위 부모</h2>
+    <ul>
+      <li>상속 관계를 끝까지 따라 올라가면 항상 <code>Object</code>가 나온다.</li>
+      <li><strong>묵시적 상속</strong>: <code>extends</code>를 안 적어도 컴파일러가 자동으로 <code>Object</code>를 상속시켜 준다 (개발자가 코드로 적지 않아도 시스템이 처리).</li>
+      <li><strong>명시적 상속</strong>: 개발자가 직접 <code>extends</code>로 적는 것. <code>extends Object</code>는 어차피 자동으로 되므로 생략하는 게 관례.</li>
+      <li>예: <code>Parent extends Object</code>(묵시적) → <code>Child extends Parent</code>(명시적) 라면, <code>Child</code>는 <code>Parent</code>를 거쳐 <code>Object</code>의 <code>toString()</code>까지 그대로 물려받는다. <code>Child</code>·<code>Parent</code> 어디에도 <code>toString()</code>을 작성한 적이 없어도 호출되는 이유.</li>
+    </ul>
+    <h3>Object가 최상위인 이유</h3>
+    <ul>
+      <li>모든 객체에게 필요한 공통 기능(정보 제공, 비교 등)을 한곳에서 제공 — 매번 새로 안 만들어도 됨.</li>
+      <li>모든 객체를 <code>Object</code> 타입 하나로 다룰 수 있게 해서, <strong>다형성</strong>의 기반이 됨.</li>
+    </ul>
+
+    <h2>Object 다형성 — 장점과 한계</h2>
+    <ul>
+      <li>서로 관계없는 <code>Dog</code>, <code>Car</code>도 결국 <code>Object</code>를 상속받으므로, <code>Object</code> 타입 변수 하나로 둘 다 참조 가능.</li>
+      <li>장점: 매개변수 타입을 <code>Object</code>로 잡으면 어떤 객체든 다 받을 수 있어 유연함.</li>
+      <li>한계: <code>Object</code>는 자기 자신이 가진 기능만 알기 때문에, <code>obj.sound()</code>처럼 <code>Dog</code>만의 메서드는 호출 불가 (컴파일 오류).</li>
+      <li>해결: <code>instanceof</code>로 타입 확인 후 다운 캐스팅. 다운 캐스팅은 객체 자체를 바꾸는 게 아니라 "어떤 타입으로 바라볼지"만 바꾸는 것.</li>
+    </ul>
+    <pre><code>Object obj = new Dog();
+
+if (obj instanceof Dog) {
+    Dog d = (Dog) obj;
+    d.sound();  // 다운 캐스팅 후에만 호출 가능
+}</code></pre>
+    <ul>
+      <li>제대로 된 다형성 활용 = <strong>다형적 참조</strong>(부모 타입으로 여러 자식 참조) + <strong>메서드 오버라이딩</strong>(자식이 부모 메서드 재정의).</li>
+      <li><code>Dog</code> 고유 기능은 다운 캐스팅 없이는 못 쓰지만, <code>Object</code>에 이미 정의된 <code>toString()</code>은 오버라이딩만으로 다형성을 그대로 누릴 수 있다.</li>
+    </ul>
+
+    <h2>Object 배열</h2>
+    <ul>
+      <li><code>Object</code>는 모든 타입을 담을 수 있으므로, <code>Object[]</code> 하나면 <code>Dog</code>든 <code>Car</code>든 종류 상관없이 담을 수 있다.</li>
+      <li><code>Object[]</code>를 받는 메서드는 새로운 클래스가 추가돼도 코드를 고칠 필요가 없다 (재사용성).</li>
+      <li>만약 <code>Object</code> 같은 공통 개념이 없었다면 → 모든 객체를 받는 배열/메서드를 만들 수 없어서 개발자마다 비슷한 걸 각자 만들고 서로 호환도 안 됐을 것.</li>
+    </ul>
+
+    <h2>toString()</h2>
+    <ul>
+      <li>기본 <code>Object.toString()</code>은 <code>클래스이름@16진수참조값</code> 형태 문자열을 반환.</li>
+      <li><code>System.out.println(obj)</code>는 내부적으로 <code>obj.toString()</code>을 호출하는 것과 같다 — 오버라이딩 안 하면 의미 없는 참조값만 출력됨.</li>
+      <li>객체 상태(필드 값)를 보여주려면 오버라이딩 필요. 직접 조립하기보다 IDE의 "Generate toString()"을 쓰는 게 안전하고 빠름.</li>
+      <li><code>ObjectPrinter.print(Object obj)</code>처럼 <code>Object</code>를 받는 메서드에 넘기면, 실행 시점에 각 클래스가 오버라이딩한 <code>toString()</code>이 호출된다 (다형성).</li>
+      <li>오버라이딩 후 원래 참조값이 필요하면 <code>Integer.toHexString(System.identityHashCode(obj))</code>로 얻을 수 있음.</li>
+    </ul>
+    <pre><code>class Dog {
+    String name;
+
+    @Override
+    public String toString() {
+        return "Dog{name='" + name + "'}";
     }
 }</code></pre>
-    </section>
 
-    <section>
-      <h2>정리</h2>
-      <ul>
-        <li>요약 포인트 1</li>
-      </ul>
-    </section>
+    <h2>Object와 OCP (개방-폐쇄 원칙)</h2>
+    <ul>
+      <li><code>Object</code>·<code>toString()</code>이 없다면: <code>Car</code>는 <code>carInfo()</code>, <code>Dog</code>는 <code>info()</code>처럼 클래스마다 제각각인 메서드가 생기고, 출력 담당 클래스는 각 클래스에 맞춰 분기해야 함 → 새 클래스 추가마다 수정 필요 (OCP 위반).</li>
+      <li><code>Object</code> 타입으로 매개변수를 받고 각 클래스가 <code>toString()</code>을 오버라이딩하게 하면, 출력 담당 클래스는 구체 클래스(<code>Car</code>, <code>Dog</code>)가 아니라 추상적인 <code>Object</code>에만 의존하게 됨.</li>
+      <li>여기서 "추상적"이란 추상 클래스·인터페이스만이 아니라, <code>Animal</code>과 <code>Dog</code>·<code>Cat</code>의 관계처럼 "더 상위 개념"이라는 뜻으로 넓게 이해.</li>
+      <li>결과: 새 클래스를 추가하고 그 클래스의 <code>toString()</code>만 채우면 되고, 출력 담당 코드는 손댈 필요 없음 — <strong>확장에는 열려 있고 변경에는 닫혀 있는</strong> OCP.</li>
+      <li><code>System.out.println</code>이 어떤 프로젝트·어떤 객체에도 수정 없이 동작하는 이유가 바로 이 원리(다형적 참조 + 메서드 오버라이딩).</li>
+    </ul>
+
+    <h2>equals() — 동일성과 동등성</h2>
+    <ul>
+      <li><strong>동일성(identity)</strong>: <code>==</code>로 비교. 완전히 같은 메모리의 같은 인스턴스인지(참조값 비교).</li>
+      <li><strong>동등성(equality)</strong>: <code>equals()</code>로 비교. 인스턴스는 달라도 논리적으로 같은 값인지.</li>
+      <li>예: 회원 번호가 같은 두 <code>User</code> 인스턴스는 물리적으로 다른 객체(동일성 없음)지만, 논리적으로는 같은 회원(동등성 있음)일 수 있다.</li>
+      <li>주의: 기본 <code>Object.equals()</code>는 내부적으로 <code>==</code>와 동일하게 동작한다 — 오버라이딩 없이 필드 값이 같은 두 객체를 비교하면 <code>false</code>가 나옴. <code>Object</code>는 어떤 필드를 기준으로 "논리적으로 같다"고 볼지 알 수 없기 때문.</li>
+    </ul>
+
+    <h2>equals() 구현</h2>
+    <pre><code>class UserV2 {
+    String id;
+
+    @Override
+    public boolean equals(Object obj) {
+        UserV2 other = (UserV2) obj;
+        return this.id.equals(other.id);  // String 비교는 == 아닌 equals()
+    }
+}</code></pre>
+    <ul>
+      <li>매개변수 타입이 <code>Object</code>이므로 <code>id</code>에 접근하려면 <code>UserV2</code>로 다운 캐스팅 필요.</li>
+      <li>위 코드는 최소 버전 — 실제로 안전한 <code>equals()</code>는 <code>null</code> 체크, 클래스 타입 체크, 반사성·대칭성·추이성·일관성 규칙까지 지켜야 해서 손으로 짜기 까다롭다.</li>
+      <li>실무 팁: 규칙을 다 외우기보다 IDE의 <code>equals</code>/<code>hashCode</code> 자동 생성 기능을 활용하는 게 낫다.</li>
+      <li><code>equals()</code>는 모든 클래스에 필요한 게 아니라, 논리적 동등성 비교가 실제로 필요한 클래스에서만 오버라이딩.</li>
+      <li><code>equals()</code>와 짝을 이루는 <code>hashCode()</code>는 컬렉션 프레임워크에서 더 다룰 내용.</li>
+    </ul>
+
+    <h2>정리</h2>
+    <ul>
+      <li><code>Object</code>는 모든 클래스가 묵시적으로 상속받는 최상위 부모.</li>
+      <li>Object 타입으로 다양한 객체를 다룰 수 있지만(다형적 참조), 고유 메서드를 쓰려면 다운 캐스팅 필요.</li>
+      <li><code>Object[]</code>는 어떤 타입이든 담을 수 있어 새 클래스 추가에도 코드 변경 불필요.</li>
+      <li><code>toString()</code>은 <code>println</code>이 내부에서 자동 호출 — 의미 있는 정보를 보려면 오버라이딩 필요.</li>
+      <li>다형적 참조 + 메서드 오버라이딩 = OCP를 실현하는 핵심 메커니즘 (<code>System.out.println</code>이 실제 사례).</li>
+      <li>동일성(<code>==</code>)과 동등성(<code>equals()</code>)은 다르다. 기본 <code>equals()</code>는 동일성과 같게 동작하므로, 논리적 비교가 필요하면 오버라이딩.</li>
+      <li>정확한 <code>equals()</code> 구현은 규칙이 많아 IDE 자동 생성 활용이 현실적.</li>
+    </ul>
   </main>
 
   <script src="sections.js"></script>

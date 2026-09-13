@@ -10,5 +10,5 @@
  * 3. Append an entry to this array.
  */
 window.SECTIONS = [
-  { id: "section-01", title: "1. (섹션 제목을 입력하세요)", href: "section-01.html" },
+  { id: "section-01", title: "1. Object 클래스", href: "section-01.html" },
 ];

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 7 - 김영한의 실전 자바 기본편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-07"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 기본편</p>
+    <h1>7. 자바 메모리 구조와 static</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 기본편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>자바 메모리 구조 — 세 영역</h2>
+    <ul>
+      <li><strong>메서드(Method) 영역</strong>: 클래스 정보(실행 코드, 필드, 메서드, 생성자 등)가 올라가는 곳 — "붕어빵 틀"에 비유된다. 이 안에는 static 변수를 보관하는 static 영역과, 문자열 리터럴 등을 관리하는 런타임 상수 풀도 함께 있다.</li>
+      <li><strong>힙(Heap) 영역</strong>: <code>new</code>로 생성한 모든 객체·배열 인스턴스가 저장되는 곳 — "붕어빵" 그 자체. 더 이상 아무도 참조하지 않으면 가비지 컬렉션 대상이 된다.</li>
+      <li><strong>스택(Stack) 영역</strong>: 메서드를 호출할 때마다 그 메서드의 지역 변수·매개변수·호출 정보를 담은 <strong>스택 프레임</strong>이 쌓이는 곳. 메서드가 끝나면 해당 프레임이 통째로 제거되고, 그 안의 지역 변수도 함께 사라진다.</li>
+      <li>메서드 코드 자체는 인스턴스마다 복제되지 않는다 — 같은 클래스에서 나온 인스턴스가 몇 개든 <strong>메서드 영역에 있는 코드 하나를 공유</strong>해서 실행한다. 각 인스턴스마다 따로 생기는 건 필드(데이터)뿐이다.</li>
+    </ul>
+
+    <h2>스택 영역의 동작 — LIFO</h2>
+    <ul>
+      <li><code>main()</code>이 <code>method1()</code>을 부르고, <code>method1()</code>이 다시 <code>method2()</code>를 부르는 상황에서, 먼저 시작된 <code>main</code>이 가장 나중에 끝나고, 가장 나중에 시작된 <code>method2</code>가 가장 먼저 끝난다 — 이것이 <strong>스택(LIFO, 후입선출)</strong> 구조다.</li>
+      <li><code>method2</code>가 끝나면 그 스택 프레임이 제거되고 <code>method1</code>의 다음 줄로 돌아간다. <code>method1</code>이 끝나면 그 프레임도 제거되고 <code>main</code>으로 돌아간다. 모든 프레임이 사라지면 프로그램이 종료된다.</li>
+    </ul>
+
+    <h2>스택과 힙이 함께 쓰이는 경우</h2>
+    <ul>
+      <li><code>method1</code> 안에서 <code>Data data1 = new Data();</code>를 하면, <strong>인스턴스 자체는 힙</strong>에 생기고, 그 <strong>참조값은 스택 프레임의 지역 변수(<code>data1</code>)</strong>에 저장된다.</li>
+      <li>이 <code>data1</code>을 <code>method2(data1)</code>처럼 넘기면, <code>method2</code>의 매개변수(<code>data2</code>)도 같은 참조값을 복사받아 <strong>같은 힙 객체를 함께 가리키게</strong> 된다.</li>
+      <li><code>method1</code>이 끝나 <code>data1</code>이 스택에서 사라지고, 그 인스턴스를 가리키는 다른 변수도 전혀 없다면 — 힙에 남은 그 객체는 아무도 찾아갈 수 없는 미아가 된다. 자바는 이런 객체를 <strong>가비지 컬렉션(GC)</strong>으로 자동 회수한다(수동 해제가 없던 C 계열 언어와 대비되는 지점).</li>
+    </ul>
+
+    <h2>static 변수가 필요한 이유 — 객체 수 세기 실패담</h2>
+    <ul>
+      <li>"이 클래스로 몇 개의 객체가 생성됐는지 세고 싶다"는 요구를 <code>count</code>라는 <strong>일반(인스턴스) 멤버 변수</strong>로 풀려 하면 실패한다 — <code>new</code>할 때마다 <code>count</code>도 매번 새로 생기는 독립된 필드라서, 아무리 생성자에서 <code>count++</code>를 해도 매 인스턴스가 각자 <code>1</code>씩만 가진다. 전체 누적치를 얻을 수 없다.</li>
+      <li>해결을 위해 별도의 <code>Counter</code> 클래스를 만들어 그 인스턴스를 공유하는 우회법도 가능하지만, 매번 <code>Counter</code> 객체를 생성자에 넘겨줘야 하는 번거로움이 생기고, "객체 수를 세는 로직"이 정작 대상 클래스 밖으로 빠져나가 버린다.</li>
+      <li>이 문제를 근본적으로 푸는 것이 바로 <strong>클래스 자체에 소속된, 모든 인스턴스가 공유하는 변수 — static 변수</strong>다.</li>
+    </ul>
+
+    <h2>static 변수 — 클래스에 하나뿐인 공용 변수</h2>
+    <ul>
+      <li>멤버 변수 앞에 <code>static</code>을 붙이면, 그 변수는 <strong>인스턴스(힙)가 아니라 메서드 영역의 static 영역에</strong> 단 하나만 생성된다. "붕어빵 틀이 직접 관리하는 변수"인 셈 — 붕어빵(인스턴스)이 몇 개든 틀은 하나이므로 static 변수도 하나다.</li>
+      <li>접근은 <strong>클래스 이름을 통해</strong> 하는 것이 원칙(<code>ClassName.count</code>). 같은 클래스 안에서는 클래스 이름을 생략하고 변수 이름만 써도 된다("내 것이니까 생략 가능").</li>
+      <li>인스턴스를 통해서(<code>instance.count</code>) 접근하는 것도 문법적으로는 가능하지만 <strong>권장되지 않는다</strong> — 마치 인스턴스마다 다른 값을 가지는 것처럼 오해를 부르기 때문에, IDE도 경고를 띄운다. 항상 클래스 이름으로 접근하는 습관이 좋다.</li>
+      <li>변수의 생명주기 정리: <strong>지역 변수</strong>(스택, 메서드 종료 시 소멸) &lt; <strong>인스턴스 변수</strong>(힙, GC 전까지) &lt; <strong>static(클래스) 변수</strong>(메서드 영역, 프로그램 시작 시 생겨 JVM 종료까지 유지) — static이 "정적"이라 불리는 이유가 바로 이 변하지 않는 생명주기다.</li>
+    </ul>
+    <pre><code>class Data1 {
+    String name;
+    static int count; // 클래스에 딱 하나 — 모든 인스턴스가 공유
+
+    Data1(String name) {
+        this.name = name;
+        count++; // Data1.count와 동일
+    }
+}
+
+new Data1("a");
+new Data1("b");
+System.out.println(Data1.count); // 2</code></pre>
+
+    <h2>static 메서드</h2>
+    <ul>
+      <li>멤버 변수 없이 매개변수만으로 계산하고 결과를 돌려주는 유틸리티성 메서드(예: 문자열을 꾸며주는 <code>decorate()</code>)라면, 굳이 매번 인스턴스를 만들 이유가 없다 — 이럴 때 메서드에 <code>static</code>을 붙이면 <strong>클래스 자체에 소속</strong>되어 인스턴스 생성 없이 <code>ClassName.method()</code>로 바로 호출할 수 있다.</li>
+      <li><strong>static 메서드는 static 멤버(static 변수·static 메서드)만 호출할 수 있다</strong> — 인스턴스 변수나 인스턴스 메서드는 호출할 수 없다. static 메서드는 "어떤 인스턴스에 대해" 실행되는 게 아니므로 애초에 참조할 인스턴스가 없기 때문이다(단, 인스턴스 참조값을 매개변수로 직접 전달받으면 그 참조를 통해 접근하는 것은 가능하다).</li>
+      <li>반대로 <strong>인스턴스 메서드는 인스턴스 멤버와 static 멤버 모두에</strong> 접근할 수 있다 — 인스턴스는 자기 필드는 물론, 클래스 이름을 통해 static 멤버도 찾아갈 수 있기 때문.</li>
+      <li>static 메서드도 인스턴스를 통해 호출하는 문법이 가능하긴 하지만 마찬가지로 <strong>클래스 이름으로 호출하는 것이 명확하고 권장</strong>된다.</li>
+      <li><code>import static</code>을 쓰면 클래스 이름조차 생략하고 메서드/변수 이름만으로 쓸 수 있다.</li>
+      <li><code>public static void main(String[] args)</code>이 정적 메서드인 이유가 여기서 설명된다 — 프로그램 시작 시점엔 아직 아무 인스턴스도 없으므로, 객체 생성 없이 바로 실행 가능한 static이어야만 프로그램의 진입점이 될 수 있다. 같은 이유로 <code>main</code>에서 직접 호출하는 다른 메서드도 static이어야 한다.</li>
+    </ul>
+    <pre><code>class DecoUtil {
+    static String decorate(String value) { // 인스턴스 상태 불필요 -> static
+        return "*" + value + "*";
+    }
+}
+
+DecoUtil.decorate("hi"); // 객체 생성 없이 바로 호출</code></pre>
+
+    <h2>정리</h2>
+    <ul>
+      <li>메서드 영역(클래스·static 정보) · 힙 영역(인스턴스) · 스택 영역(지역 변수·호출 정보)이 자바 메모리의 세 축이다.</li>
+      <li>필드/메서드는 <code>static</code> 유무로 <strong>클래스(정적) 소속</strong>과 <strong>인스턴스 소속</strong>으로 나뉜다 — 클래스 소속은 딱 하나만 존재해 모든 인스턴스가 공유하고, 인스턴스 소속은 <code>new</code>할 때마다 각자 따로 생긴다.</li>
+      <li>static 메서드는 static만 호출 가능, 인스턴스 메서드는 둘 다 호출 가능 — 이 비대칭은 "인스턴스가 자신이 속한 클래스 정보는 알지만, 클래스는 특정 인스턴스를 모른다"는 사실에서 비롯된다.</li>
+      <li>여러 인스턴스가 공유해야 하는 데이터(카운터 등)나, 인스턴스 상태가 필요 없는 순수 유틸리티 기능은 static으로 설계하는 것이 자연스럽다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 기본편",
+      courseHome: "index.html",
+      currentId: "section-07",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

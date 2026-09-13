@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 6 - 김영한의 실전 자바 기본편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-06"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 기본편</p>
+    <h1>6. 접근 제어자</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 기본편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>접근 제어자가 필요한 이유 — 스피커 사고</h2>
+    <ul>
+      <li>스피커 볼륨이 100을 넘으면 부품이 고장 나는 요구사항이 있어, <code>volumeUp()</code> 메서드 안에 "100을 넘지 않는다"는 제약을 넣어뒀다.</li>
+      <li>문제는 <code>volume</code> 필드가 아무 접근 제어자 없이(default) 열려 있었다는 것 — 나중에 합류한 다른 개발자가 이 제약을 모른 채 <code>speaker.volume = 200;</code>처럼 <strong>필드에 직접 접근해서 값을 바꿔버렸다</strong>. <code>volumeUp()</code>의 검증 로직은 완전히 무시되고, 결국 스피커가 과부하로 고장 난다.</li>
+      <li>교훈: 메서드 안에 아무리 좋은 제약을 넣어도, <strong>필드 자체로의 직접 접근이 열려 있으면 그 제약은 언제든 우회될 수 있다</strong> — 근본적인 해결책은 필드로의 접근 자체를 막는 것.</li>
+    </ul>
+
+    <h2>private — 외부 접근 원천 차단</h2>
+    <ul>
+      <li><code>private int volume;</code>처럼 선언하면 <strong>그 클래스 내부의 메서드에서만</strong> 접근할 수 있고, 다른 클래스에서 <code>speaker.volume</code>에 접근하려 하면 <strong>컴파일 오류</strong>가 난다 — "private access in ..." 형태의 메시지로 막아준다.</li>
+      <li>처음부터 <code>private</code>을 썼다면, 외부 개발자는 애초에 <code>volume</code> 필드에 접근할 방법이 없어 반드시 <code>volumeUp()</code> 메서드를 거칠 수밖에 없었을 것 — 스피커 폭발 사고 자체가 일어나지 않았을 것이다.</li>
+      <li>"좋은 프로그램은 무한한 자유도가 아니라 적절한 제약이 있는 프로그램" — 무한한 자유도는 무한한 버그로 이어진다는 게 이 강의 전체를 관통하는 관점이다.</li>
+    </ul>
+
+    <h2>접근 제어자 네 가지</h2>
+    <ul>
+      <li><strong>private</strong>: 선언된 클래스 내부에서만 — 가장 강력한 차단.</li>
+      <li><strong>default(package-private)</strong>: 아무것도 안 붙였을 때 자동 적용. <strong>같은 패키지 안</strong>에서만 접근 가능.</li>
+      <li><strong>protected</strong>: default 범위(같은 패키지) + <strong>패키지가 달라도 상속 관계</strong>에 있는 클래스에서는 접근 가능(상속을 배운 뒤 자세히 다룸).</li>
+      <li><strong>public</strong>: 어디서든 접근 가능 — 가장 개방적.</li>
+      <li>차단 범위로 줄 세우면 <code>private &lt; default &lt; protected &lt; public</code> 순으로 점점 넓어진다. 네 제어자 모두 클래스, 필드, 생성자, 메서드에 적용할 수 있다(단, 지역 변수에는 스코프 자체가 이미 좁기 때문에 접근 제어자를 쓸 수 없다).</li>
+      <li>지금까지 예제에서 주로 default를 써온 것은, 아직 접근 제어자를 배우기 전에 <code>public</code>/<code>private</code>까지 신경 쓰게 하면 학습 부담이 커지기 때문이었을 뿐 — 실제로는 같은 패키지 안에 몰아둔 예제 클래스들끼리라 default로도 잘 동작했던 것이다.</li>
+    </ul>
+
+    <h2>필드·메서드 레벨 접근 실습</h2>
+    <ul>
+      <li>클래스 <strong>내부에서는</strong> <code>private</code>을 포함한 모든 멤버에 접근할 수 있다.</li>
+      <li><strong>같은 패키지</strong>에서는 <code>public</code>과 <code>default</code> 멤버에 접근할 수 있지만 <code>private</code>은 여전히 막힌다.</li>
+      <li><strong>다른 패키지</strong>에서는 <code>public</code> 멤버만 접근할 수 있다 — <code>default</code> 멤버는 <code>import</code>를 해도 소용없이 컴파일 오류가 난다. 이 대목에서 "지금부터는 패키지의 위치가 매우 중요하다"는 점이 강조된다.</li>
+      <li>생성자도 메서드와 동일하게 <code>private</code>/<code>default</code>/<code>public</code> 접근 제어자를 받을 수 있다.</li>
+    </ul>
+
+    <h2>클래스 레벨 접근 제어자</h2>
+    <ul>
+      <li>클래스 자체에는 <code>public</code>과 <code>default</code> 두 가지만 쓸 수 있다 — <code>private</code>·<code>protected</code>는 클래스 레벨에 쓸 수 없다.</li>
+      <li><strong><code>public</code> 클래스는 반드시 파일 이름과 클래스 이름이 같아야 하고</strong>, 한 파일에 <code>public</code> 클래스는 <strong>딱 하나만</strong> 존재할 수 있다.</li>
+      <li><code>default</code> 클래스는 파일 이름과 무관하며, 한 파일 안에 여러 개를 정의할 수 있다. 다만 다른 패키지에서는 <code>import</code>를 해도 접근할 수 없다는 점은 필드·메서드와 동일하다.</li>
+    </ul>
+
+    <h2>캡슐화 — 데이터는 다 숨기고, 기능은 필요한 것만</h2>
+    <ul>
+      <li>캡슐화의 실천 원칙은 단순하다: <strong>① 데이터(필드)는 전부 숨긴다</strong>(<code>private</code>), <strong>② 기능(메서드)은 외부에 꼭 필요한 것만 공개</strong>하고 내부에서만 쓰는 보조 로직은 숨긴다.</li>
+      <li>자동차 운전자가 속도계 바늘을 직접 손으로 돌리지 않고 액셀·브레이크라는 "기능"을 통해서만 속도를 바꾸듯, 객체의 데이터도 항상 메서드를 거쳐서만 변경되어야 한다.</li>
+      <li><strong>잘 설계된 예 — <code>BankAccount</code></strong>: <code>balance</code>(잔고) 필드는 <code>private</code>. <code>deposit()</code>·<code>withdraw()</code>는 <code>public</code>으로 열어 외부가 쓸 수 있게 하고, 그 안에서만 쓰이는 <code>isAmountValid()</code>(금액 검증)는 <code>private</code>으로 숨긴다. 잔고 조회용 <code>getBalance()</code>만 <code>public</code>으로 노출한다.</li>
+      <li><strong>잘못된 예</strong>: <code>isAmountValid()</code>를 <code>public</code>으로 열면 사용하는 개발자가 "이걸 내가 먼저 불러야 하나?"하고 혼란스러워한다. <code>balance</code> 필드를 <code>public</code>으로 열면 <code>deposit</code>/<code>withdraw</code>의 검증 로직을 통째로 건너뛰고 값을 조작할 수 있게 되어, 스피커 사고와 똑같은 문제가 재현된다.</li>
+    </ul>
+    <pre><code>class BankAccount {
+    private int balance;               // 데이터는 숨긴다
+
+    public void deposit(int amount) {  // 꼭 필요한 기능만 공개
+        if (isAmountValid(amount)) balance += amount;
+    }
+    public void withdraw(int amount) {
+        if (isAmountValid(amount) && balance >= amount) balance -= amount;
+    }
+    public int getBalance() { return balance; }
+
+    private boolean isAmountValid(int amount) { // 내부 전용 로직은 숨긴다
+        return amount > 0;
+    }
+}</code></pre>
+
+    <h2>정리</h2>
+    <ul>
+      <li>접근 제어자는 <code>private &lt; default &lt; protected &lt; public</code> 순으로 개방 범위가 넓어지며, 클래스·필드·생성자·메서드에 적용된다(클래스 레벨은 <code>public</code>/<code>default</code>만 가능).</li>
+      <li>메서드 안의 검증 로직만으로는 데이터를 지킬 수 없다 — 필드 자체를 <code>private</code>으로 막아야 우회 접근을 원천 차단할 수 있다.</li>
+      <li>캡슐화의 원칙은 "데이터는 다 숨기고, 기능은 꼭 필요한 것만 공개"로 요약된다. 이 원칙을 지키면 클래스를 사용하는 입장에서도 무엇을 호출해야 할지 헷갈리지 않고, 내부 구현을 바꿔도 사용하는 쪽 코드에 영향을 주지 않는다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 기본편",
+      courseHome: "index.html",
+      currentId: "section-06",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

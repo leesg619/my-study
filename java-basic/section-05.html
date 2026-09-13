@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 5 - 김영한의 실전 자바 기본편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-05"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 기본편</p>
+    <h1>5. 패키지</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 기본편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>패키지가 필요한 이유</h2>
+    <ul>
+      <li>클래스 수가 많아지는 대규모 시스템에서는 관련된 클래스를 어딘가에 모아 분류해두지 않으면 관리가 힘들어진다. 컴퓨터의 폴더/디렉토리와 같은 개념을 자바 코드 세계에 옮긴 것이 <strong>패키지</strong>다 — "물건을 담는 포장 용기, 묶음"이라는 이름 그대로다.</li>
+      <li>모든 클래스 파일의 첫 줄에는 <code>package pack;</code>처럼 자신이 속한 패키지를 선언해야 한다. 선언이 없으면 컴파일 오류가 난다.</li>
+      <li>점(<code>.</code>)으로 하위 패키지를 구분한다 — <code>pack.a</code>처럼. <strong>같은 패키지</strong>의 클래스는 이름만으로 참조할 수 있지만, <strong>다른 패키지</strong>의 클래스는 <code>pack.a.User</code>처럼 패키지명을 포함한 전체 경로(풀 네임)로 참조해야 한다. 다른 패키지에서 생성자·메서드를 쓰려면 해당 멤버가 <code>public</code>이어야 한다는 점도 함께 등장한다(자세한 접근 제어는 다음 섹션에서).</li>
+    </ul>
+
+    <h2>import</h2>
+    <ul>
+      <li>다른 패키지의 클래스를 쓸 때마다 전체 경로를 적는 건 번거롭다 — <code>import pack.a.User;</code>를 파일 상단에 선언하면, 이후 코드에서는 패키지명을 생략하고 <code>User</code>라는 이름만으로 쓸 수 있다.</li>
+      <li>특정 패키지의 클래스를 여러 개 쓸 때는 <code>import pack.a.*;</code>처럼 와일드카드로 한 번에 가져올 수 있다. 단, 이 <code>*</code>는 <strong>하위 패키지까지는 포함하지 않는다</strong> — 딱 그 패키지 바로 안의 클래스들만.</li>
+      <li>서로 다른 패키지에 같은 이름의 클래스가 있으면 <code>import</code>는 둘 중 하나만 선언할 수 있다 — 자주 쓰는 쪽을 <code>import</code>하고, 나머지는 그때그때 전체 경로로 적는 것이 실용적인 해법이다. (둘 다 전체 경로로 적고 아예 import를 안 쓰는 방법도 있다.)</li>
+    </ul>
+    <pre><code>package main1;
+
+import pack.a.User; // pack.a.User를 User로 쓸 수 있게
+
+public class PackageMain1 {
+    public static void main(String[] args) {
+        User user = new User();
+    }
+}</code></pre>
+
+    <h2>패키지 규칙</h2>
+    <ul>
+      <li><strong>이름·위치가 실제 폴더 구조와 정확히 일치해야 한다</strong>(필수) — <code>src/pack/a</code> 폴더 안의 클래스는 반드시 <code>package pack.a;</code>를 선언해야 한다.</li>
+      <li><strong>이름은 모두 소문자</strong>를 쓴다(관례) — 운영체제마다 대소문자 구분 방식이 달라 생길 수 있는 문제를 피하기 위함.</li>
+      <li><strong>회사 도메인을 거꾸로 쓴 이름을 앞에 붙이는 것</strong>이 일반적이다(예: <code>com.company.myapp</code>) — 여러 회사·라이브러리가 같은 이름의 클래스를 만들어도 패키지명이 고유하면 충돌하지 않는다. 오픈소스 라이브러리를 외부에 공개할 때 특히 중요한 관례다.</li>
+      <li><strong>패키지 계층은 "사람이 이해하기 위한 분류"일 뿐, 자바 입장에서 <code>a</code>, <code>a.b</code>, <code>a.c</code>는 완전히 독립된 별개의 패키지</strong>다. <code>a</code> 패키지의 클래스가 <code>a.b</code> 패키지의 클래스를 쓰려면 계층상 "하위"라 해도 반드시 <code>import</code>해야 한다 — 자동으로 접근되지 않는다.</li>
+    </ul>
+
+    <h2>패키지 활용 — 쇼핑몰 예제</h2>
+    <ul>
+      <li>실제 애플리케이션이라면 대략 이런 식으로 나눌 수 있다는 감각을 잡는 예제다(정답은 아니고, 프로젝트 규모·아키텍처에 따라 달라진다): <code>com.helloshop</code> 아래에 <code>user</code>, <code>product</code>, <code>order</code> 세 개의 하위 패키지를 둔다.</li>
+      <li><code>user</code> 패키지엔 <code>User</code>, <code>UserService</code>. <code>product</code> 패키지엔 <code>Product</code>, <code>ProductService</code>. <code>order</code> 패키지엔 <code>Order</code>, <code>OrderService</code>.</li>
+      <li><code>Order</code>는 "어떤 사용자가 어떤 제품을 주문했는지"를 표현해야 하므로 <code>user</code> 패키지의 <code>User</code>와 <code>product</code> 패키지의 <code>Product</code>를 <code>import</code>해서 사용한다 — 이때 <code>Order</code>의 생성자는 다른 패키지(<code>OrderService</code> 등)에서 호출할 수 있어야 하므로 <code>public</code>으로 선언한다.</li>
+      <li>기준은 단순하다: <strong>서로 자주 가져다 쓰는(의존이 많은) 클래스는 같은 패키지에 묶고, 관련이 적은 클래스는 다른 패키지로 분리</strong>한다.</li>
+    </ul>
+    <pre><code>package com.helloshop.order;
+
+import com.helloshop.user.User;
+import com.helloshop.product.Product;
+
+public class Order {
+    public Order(User user, Product product) { ... } // 다른 패키지에서 호출 -> public
+}</code></pre>
+
+    <h2>정리</h2>
+    <ul>
+      <li>패키지는 관련 클래스를 묶는 폴더 개념이며, 실제 파일 시스템 폴더 구조와 반드시 일치해야 한다.</li>
+      <li><code>import</code>는 다른 패키지 클래스를 쓸 때 전체 경로를 매번 적지 않아도 되게 해주는 편의 문법 — 이름이 중복되면 자주 쓰는 쪽만 import하고 나머지는 전체 경로로 구분한다.</li>
+      <li>패키지명은 소문자 + 회사 도메인 역순이 관례이며, 이는 서로 다른 코드베이스·라이브러리 간 클래스 이름 충돌을 막기 위한 장치다.</li>
+      <li>패키지의 계층 구조는 사람이 보기 좋으라고 만든 것일 뿐, 자바 컴파일러에게는 <code>a</code>와 <code>a.b</code>가 전혀 별개의 패키지라는 점을 기억해야 한다 — 하위 패키지라도 <code>import</code> 없이는 접근할 수 없다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 기본편",
+      courseHome: "index.html",
+      currentId: "section-05",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

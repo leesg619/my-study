@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 2 - 김영한의 실전 자바 기본편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-02"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 기본편</p>
+    <h1>2. 기본형과 참조형</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 기본편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>기본형 vs 참조형</h2>
+    <ul>
+      <li>변수의 데이터 타입은 크게 <strong>기본형(primitive type)</strong>과 <strong>참조형(reference type)</strong>으로 나뉜다. 기본형(<code>int</code>, <code>long</code>, <code>double</code>, <code>boolean</code> 등)은 실제 사용할 값을 변수에 직접 저장하고, 참조형(<code>Student</code> 객체, 배열 등)은 객체가 있는 메모리 위치를 가리키는 참조값(주소)을 저장한다.</li>
+      <li>구분 기준은 단순하다 — <strong>기본형을 제외한 나머지는 전부 참조형</strong>. 기본형은 소문자로 시작하고 자바가 미리 정해둔 타입이라 개발자가 새로 만들 수 없지만, 클래스(참조형)는 대문자로 시작하며 개발자가 직접 정의할 수 있다.</li>
+      <li>참조값 자체는 그냥 주소일 뿐이라 바로 연산에 쓸 수 없다 — 실제 값을 쓰려면 참조값을 따라 객체가 있는 곳까지 가서 멤버 변수에 접근해야 한다.</li>
+      <li><code>String</code>은 사실 클래스라서 참조형이지만, 워낙 자주 쓰이는 타입이라 자바가 기본형처럼 편하게 쓸 수 있도록 특별히 배려해준 것 — 내부적으로는 여전히 참조값을 저장하고 있다.</li>
+    </ul>
+
+    <h2>변수 대입 — 항상 "값의 복사"</h2>
+    <ul>
+      <li><strong>자바의 모든 대입은 변수에 들어있는 값을 복사해서 전달하는 것</strong>이다. 이 원칙은 기본형이든 참조형이든 예외가 없다.</li>
+      <li>기본형: <code>int b = a;</code>는 <code>a</code>에 든 값(예: 10)을 복사해 <code>b</code>에 넣는다. 이후 <code>a</code>나 <code>b</code>를 바꿔도 서로 영향을 주지 않는 완전히 독립된 값이다.</li>
+      <li>참조형: <code>Data dataB = dataA;</code>는 <code>dataA</code>에 든 <strong>참조값(주소)</strong>을 복사해 <code>dataB</code>에 넣는다. 이 순간 <code>dataA</code>와 <code>dataB</code>는 같은 객체를 가리키게 되므로, <code>dataA.value</code>를 바꾸면 <code>dataB.value</code>로 읽어도 똑같이 바뀐 값이 보인다 — 객체 자체가 복사된 게 아니라 "같은 건물을 가리키는 주소지"가 하나 더 생긴 것뿐이기 때문.</li>
+    </ul>
+    <pre><code>Data dataA = new Data();
+dataA.value = 10;
+
+Data dataB = dataA;   // 참조값만 복사 — 같은 인스턴스를 가리킴
+dataB.value = 20;
+
+System.out.println(dataA.value); // 20 (dataA로 봐도 바뀐 값)</code></pre>
+
+    <h2>메서드 호출도 결국 값의 복사</h2>
+    <ul>
+      <li>메서드에 매개변수를 넘기는 것도 변수 대입과 같은 원리다 — 항상 <strong>값에 의한 전달(pass by value)</strong>.</li>
+      <li>기본형 매개변수는 실제 값이 복사되어 전달되므로, 메서드 안에서 매개변수를 바꿔도 호출한 쪽의 원본 변수는 전혀 영향받지 않는다 — 서로 다른 통에 값만 옮겨 담는 것과 같다.</li>
+      <li>참조형 매개변수는 참조값이 복사되어 전달된다. 메서드 안에서 그 참조값을 따라가 객체의 멤버 변수를 바꾸면, 호출한 쪽이 가진 변수도 <strong>같은 객체를 가리키고 있으므로</strong> 변경이 그대로 반영된다.</li>
+    </ul>
+    <pre><code>static void changePrimitive(int x) {
+    x = 20; // 원본에 영향 없음
+}
+
+static void changeReference(Data data) {
+    data.value = 20; // 같은 인스턴스이므로 원본도 바뀜
+}</code></pre>
+
+    <h2>참조형과 메서드 호출 활용</h2>
+    <ul>
+      <li>객체를 만들고 값을 채우고 출력하는 코드가 반복될 때, 참조값을 메서드로 넘기는 패턴을 쓰면 중복을 크게 줄일 수 있다.</li>
+      <li><strong><code>printStudent(Student s)</code></strong>: 참조값을 받아 출력만 담당 — 출력 코드 중복 제거.</li>
+      <li><strong><code>initStudent(Student s, ...)</code></strong>: 참조값을 받아 멤버 변수 값을 채운다 — 메서드 내부에서 <code>s.name = ...</code>처럼 값을 대입하면, 같은 인스턴스를 가리키는 호출자 쪽 변수에도 그대로 반영된다.</li>
+      <li><strong><code>createStudent(...)</code></strong>: 아예 메서드 안에서 <code>new</code>로 객체를 만들고 값을 채운 뒤, 그 참조값을 <code>return</code>으로 돌려준다 — 객체 생성과 초기화를 한 줄 호출로 압축하는 패턴.</li>
+    </ul>
+    <pre><code>static Student createStudent(String name, int age) {
+    Student s = new Student();
+    s.name = name;
+    s.age = age;
+    return s; // 참조값 반환
+}
+
+Student student1 = createStudent("김영한", 20);</code></pre>
+
+    <h2>변수와 초기화 — 멤버 변수 vs 지역 변수</h2>
+    <ul>
+      <li><strong>멤버 변수(필드)</strong>는 클래스 안에 선언된 변수, <strong>지역 변수</strong>는 메서드 안에 선언된 변수(매개변수도 지역 변수의 일종)다. 지역 변수는 선언된 메서드 블록이 끝나면 함께 사라진다.</li>
+      <li>초기화 방식이 다르다 — <strong>멤버 변수</strong>는 <code>new</code>로 인스턴스를 만드는 순간 자동으로 기본값(숫자 0, boolean false, 참조형 null)으로 초기화된다. <strong>지역 변수</strong>는 자바가 자동으로 초기화해주지 않으므로, 초기화하지 않고 사용하려 하면 컴파일 오류가 난다.</li>
+    </ul>
+
+    <h2>null과 가비지 컬렉션</h2>
+    <ul>
+      <li>참조형 변수가 아직 가리킬 대상이 없거나, 더 이상 아무것도 가리키지 않게 하고 싶을 때 <code>null</code>을 대입한다. <code>null</code>은 기본형에는 쓸 수 없고 참조형에서만 쓴다.</li>
+      <li>어떤 인스턴스를 아무도 참조하지 않게 되면(모든 변수에서 참조가 끊기면) 그 인스턴스는 더 이상 프로그램에서 접근할 방법이 없는, 메모리만 차지하는 쓰레기가 된다.</li>
+      <li>C 같은 언어는 개발자가 직접 메모리를 해제해야 해서 실수로 인한 메모리 누수가 잦았지만, 자바는 <strong>가비지 컬렉션(GC)</strong>이 아무도 참조하지 않는 인스턴스를 자동으로 찾아 정리해준다 — 개발자가 메모리 해제를 신경 쓰지 않아도 되는 이유.</li>
+    </ul>
+
+    <h2>NullPointerException</h2>
+    <ul>
+      <li><code>null</code>에 점(<code>.</code>)을 찍는 순간 발생하는 예외 — 점 연산자는 참조값을 따라 객체로 찾아가는 동작인데, <code>null</code>은 애초에 갈 곳(주소)이 없기 때문에 터진다. "갈 주소 없이 택배를 보내는 상황"에 비유할 수 있다.</li>
+      <li>지역 변수가 <code>null</code>인 경우는 눈으로 바로 보이지만, <strong>멤버 변수가 null인 경우</strong>가 까다롭다 — 참조형 멤버 변수는 <code>new</code>로 인스턴스를 막 생성했을 때 기본값이 <code>null</code>이라는 사실을 잊기 쉽다. 예: <code>BigData</code> 클래스의 <code>data</code> 필드가 아직 초기화되지 않은 채로 <code>bigData.data.value</code>에 접근하면 NPE가 난다.</li>
+      <li>해결책은 단순하다 — 접근하기 전에 <code>bigData.data = new Data();</code>처럼 실제 객체를 명시적으로 할당해두는 것. NPE를 만나면 "null에 점을 찍었다"는 사실만 떠올리면 원인을 찾기 쉽다.</li>
+    </ul>
+
+    <h2>정리</h2>
+    <ul>
+      <li>기본형은 값 자체를, 참조형은 객체의 주소(참조값)를 저장한다 — 이 차이가 대입, 메서드 호출, null 처리 전부의 근거가 된다.</li>
+      <li>자바의 대입과 메서드 호출은 언제나 "변수 안의 값을 복사해서 전달"이라는 하나의 원칙으로 설명된다. 참조형이라고 해서 인스턴스 자체가 복사되는 일은 없다.</li>
+      <li>멤버 변수는 인스턴스 생성 시 자동 초기화(참조형은 null), 지역 변수는 직접 초기화해야 한다는 차이를 기억해야 한다.</li>
+      <li>NullPointerException은 결국 "null에 점을 찍었다"는 한 문장으로 요약된다 — 특히 이제 막 생성해서 아직 값을 채우지 않은 참조형 멤버 변수를 의심하는 습관이 중요하다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 기본편",
+      courseHome: "index.html",
+      currentId: "section-02",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

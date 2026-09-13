@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 8 - 김영한의 실전 자바 기본편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-08"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 기본편</p>
+    <h1>8. final</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 기본편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>final의 기본 의미 — "끝, 값이 들어오면 끝"</h2>
+    <ul>
+      <li><code>final</code>이 붙은 변수는 <strong>딱 한 번만</strong> 값을 할당할 수 있고, 그 이후 다시 값을 바꾸려 하면 컴파일 오류가 난다.</li>
+      <li><strong>지역 변수</strong>: 선언과 동시에 초기화하거나, 선언 후 최초 대입 시점에 한 번만 값을 넣을 수 있다.</li>
+      <li><strong>매개변수</strong>: <code>final</code>을 붙이면 메서드 안에서 그 매개변수의 값을 바꿀 수 없다.</li>
+      <li><strong>필드(멤버 변수)</strong>: 생성자를 통해 한 번만 초기화하거나, 필드 선언과 동시에 초기화할 수 있다. 생성자로 초기화하면 인스턴스마다 다른 값을 가질 수 있고, 필드에서 바로 초기화하면 모든 인스턴스가 같은 값을 갖는다(그리고 그 값은 다시 못 바꾼다).</li>
+    </ul>
+
+    <h2>static final — 상수</h2>
+    <ul>
+      <li>필드를 선언과 동시에 초기화하는 <code>final</code>은 사실 인스턴스마다 <strong>같은 값을 중복해서</strong> 들고 있는 셈이라 메모리 낭비다 — 이럴 때 <code>static</code>까지 함께 붙이면, 그 값이 <strong>메서드 영역의 static 영역에 딱 하나만</strong> 존재하고 모든 인스턴스가 공유한다.</li>
+      <li>이렇게 <code>static final</code>로 선언한 변경 불가능한 값을 <strong>상수(constant)</strong>라 부른다. 관례상 <strong>모두 대문자 + 단어는 언더스코어로 구분</strong>(<code>MAX_USER</code>)해서 이름 짓는다 — 일반 변수의 카멜케이스와 구분해 "이건 상수구나"를 한눈에 알아보게 하기 위함.</li>
+      <li>상수는 기능이 아니라 <strong>고정된 값 자체</strong>를 쓰는 게 목적이라, <code>final</code>이 이미 변경을 막아주므로 <code>public</code>으로 필드를 직접 노출해도 캡슐화가 깨지는 문제가 생기지 않는다(<code>Constants.PI</code>처럼 클래스명으로 바로 접근).</li>
+    </ul>
+    <pre><code>class Constants {
+    public static final double PI = 3.14159;
+    public static final int MAX_USER = 1000;
+}
+
+Constants.MAX_USER // 클래스명으로 직접 접근</code></pre>
+
+    <h2>매직 넘버 문제</h2>
+    <ul>
+      <li>코드 여기저기에 <code>1000</code>, <code>3.14</code> 같은 숫자가 그냥 박혀 있으면("매직 넘버") 그 숫자가 무슨 의미인지 코드만 보고는 알기 어렵고, 값을 바꿔야 할 때 모든 사용처를 찾아 일일이 고쳐야 한다.</li>
+      <li>상수로 뽑아내면(<code>MAX_USER</code>) 이름 자체가 의미를 설명해주고, <strong>값을 바꿀 때도 상수 선언부 한 곳만 고치면 프로그램 전체에 일관되게 반영</strong>된다 — 상수의 "중앙 관리" 장점.</li>
+    </ul>
+
+    <h2>final과 참조형 변수 — 헷갈리기 쉬운 지점</h2>
+    <ul>
+      <li>변수는 기본형(값 자체를 저장)과 참조형(객체의 참조값을 저장)으로 나뉜다는 걸 기억하자. <code>final</code>이 하는 일은 언제나 <strong>"그 변수에 저장된 값을 못 바꾼다"</strong>이다.</li>
+      <li>기본형에 <code>final</code>을 붙이면 값 자체를 못 바꾼다 — 직관적이다.</li>
+      <li>참조형에 <code>final</code>을 붙이면 <strong>그 변수가 담고 있는 참조값(어떤 객체를 가리키는지)을 못 바꾼다</strong>는 뜻이지, <strong>그 객체 내부의 필드까지 못 바꾼다는 뜻이 아니다</strong>. <code>final Data data = new Data();</code> 이후 <code>data = new Data();</code>(다른 객체로 재할당)는 컴파일 오류지만, <code>data.value = 10;</code>(같은 객체 내부 값 변경)은 아무 문제 없이 동작한다.</li>
+      <li>"final인데 왜 값이 바뀌지?"라는 오해가 여기서 자주 생긴다 — <code>final</code>이 잠그는 건 <strong>변수 자체(어느 객체를 가리키는가)</strong>이지 그 객체의 내부 상태가 아니라는 점을 구분해야 한다.</li>
+    </ul>
+    <pre><code>final Data data = new Data();
+data.value = 10;     // OK — 객체 내부 값 변경
+data = new Data();   // 컴파일 오류 — 참조 대상 자체를 바꾸려 함</code></pre>
+
+    <h2>final을 실무에서 쓰는 이유</h2>
+    <ul>
+      <li>예: 고객 ID처럼 <strong>생성 이후 절대 바뀌면 안 되는 값</strong>에 <code>final</code>을 걸어두면, 누군가 실수로(혹은 몇 달 뒤 코드를 잊고) 그 값을 바꾸는 코드를 추가하려는 순간 <strong>컴파일러가 즉시 오류로 잡아준다</strong>.</li>
+      <li><code>final</code> 없이 방치했다면, 실수로 바뀐 고객 ID 하나가 로그·결제·결제 이력 조회 등 시스템 전반에 조용히 잘못된 영향을 퍼뜨릴 수 있다 — 컴파일 시점에 막는 것과 런타임에 뒤늦게 발견하는 것의 차이는 크다.</li>
+      <li><code>final</code>은 코드를 작성하는 시점에 "이 값은 절대 안 바뀐다"는 의도를 명시적으로 남기는 장치이기도 하다 — 나중에 그 코드를 다시 보는 사람(자신 포함)이 왜 이 값이 고정되어야 하는지 고민할 필요 없이 바로 알 수 있다.</li>
+    </ul>
+
+    <h2>정리</h2>
+    <ul>
+      <li><code>final</code>은 지역 변수·매개변수·필드 어디에 붙든 "값을 한 번만 할당하고 더는 못 바꾼다"는 동일한 규칙을 강제한다.</li>
+      <li><code>static final</code>로 상수를 만들면 메모리도 아끼고, 매직 넘버 문제도 해결하고, 값을 한 곳에서 관리할 수 있다 — 관례상 대문자+언더스코어로 명명한다.</li>
+      <li>참조형 변수의 <code>final</code>은 "가리키는 대상"만 고정할 뿐, 그 대상 내부의 값까지 잠그지는 않는다는 점이 가장 헷갈리기 쉬운 함정이다.</li>
+      <li>실무적으로 <code>final</code>은 "절대 바뀌면 안 되는 값"에 대한 실수 방지 장치이자, 코드 의도를 명확히 남기는 문서화 수단이다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 기본편",
+      courseHome: "index.html",
+      currentId: "section-08",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

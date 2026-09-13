@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 4 - 김영한의 실전 자바 기본편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-04"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 기본편</p>
+    <h1>4. 생성자</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 기본편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>생성자가 필요한 이유</h2>
+    <ul>
+      <li>객체를 만든 뒤 <code>member.name = "값"</code>처럼 매번 멤버 변수를 하나하나 채워주는 코드는 반복될수록 지저분해진다. 이를 <code>initMember(member, name, age, grade)</code> 같은 메서드로 뽑아내도, 결국 그 메서드는 <code>member</code>의 데이터만 만지고 있다 — 객체 지향 원칙대로라면 <strong>자기 데이터는 자기 스스로 초기화</strong>하는 게 더 자연스럽다.</li>
+      <li>이 필요성이 자연스럽게 "객체를 생성하는 바로 그 시점에 초기화까지 끝내고 싶다"는 요구로 이어지고, 그 답이 <strong>생성자(constructor)</strong>다.</li>
+    </ul>
+
+    <h2>this — 나 자신을 가리키는 참조</h2>
+    <ul>
+      <li>매개변수 이름과 멤버 변수 이름이 같으면(<code>name</code> 매개변수, <code>name</code> 필드) 문제가 생긴다 — 스코프상 <strong>더 가까운 것이 우선</strong>이라, <code>name = name;</code>이라고만 쓰면 매개변수에 매개변수 자기 자신을 대입하는 꼴이 되어 아무 일도 일어나지 않는다.</li>
+      <li><code>this.name = name;</code>처럼 <code>this</code>를 붙이면 "지역 변수 말고 내 인스턴스의 멤버 변수"라는 뜻이 명확해진다. <code>this</code>는 <strong>인스턴스 자기 자신의 참조값</strong>이라고 이해하면 된다.</li>
+      <li>이름이 겹치지 않으면 <code>this</code>는 생략 가능하다 — 자바는 가까운 지역 변수부터 찾고 없으면 멤버 변수를 찾기 때문. 과거엔 가독성을 위해 습관적으로 <code>this</code>를 붙이는 스타일도 있었지만, 요즘 IDE는 멤버 변수를 색으로 구분해 보여주므로 이름이 겹치는 경우가 아니면 굳이 붙이지 않아도 된다.</li>
+    </ul>
+
+    <h2>생성자 도입</h2>
+    <ul>
+      <li>생성자는 <strong>클래스 이름과 똑같은 이름</strong>의 특별한 메서드이며, <strong>반환 타입이 없다</strong>(<code>void</code>조차 쓰지 않는다). 나머지는 일반 메서드와 비슷하게 매개변수를 받을 수 있다.</li>
+      <li><code>new Member("김영한", 20, 100)</code>처럼 호출하면, 자바는 "메모리에 객체를 만들고 + 그 생성자를 호출하라"는 두 가지를 한 번에 처리한다.</li>
+      <li>생성자의 실익 두 가지: ① 객체 생성과 초기화를 별도 메서드 호출 없이 <strong>한 번에("원큐에")</strong> 끝낼 수 있다. ② 생성자에 정의된 매개변수를 <strong>반드시 전달해야만</strong> 객체를 만들 수 있으므로, 필수 값 입력을 빼먹는 실수를 <strong>컴파일 오류</strong>로 미리 막아준다 — 값이 하나도 안 채워진 "유령 객체"가 시스템을 돌아다니는 사고를 원천 차단한다.</li>
+      <li>"좋은 프로그램은 무한한 자유도가 아니라 적절한 제약이 있는 프로그램" — 생성자가 그 제약 역할을 한다는 게 강의에서 강조하는 관점이다.</li>
+    </ul>
+    <pre><code>class Member {
+    String name;
+    int age;
+    int grade;
+
+    Member(String name, int age, int grade) { // 클래스명과 동일, 반환타입 없음
+        this.name = name;
+        this.age = age;
+        this.grade = grade;
+    }
+}
+
+Member member = new Member("김영한", 20, 100); // 생성 + 초기화 한 번에</code></pre>
+
+    <h2>기본 생성자</h2>
+    <ul>
+      <li>클래스에 생성자를 <strong>단 하나도 정의하지 않으면</strong>, 자바 컴파일러가 매개변수 없고 하는 일도 없는 빈 생성자를 자동으로 만들어준다 — 이것이 <strong>기본 생성자</strong>다. 아무 생성자도 없이 <code>new Member()</code>가 동작했던 이유가 바로 이것.</li>
+      <li>반대로 <strong>생성자를 하나라도 직접 정의하면</strong> 자바는 더 이상 기본 생성자를 자동으로 만들어주지 않는다 — 이 상태에서 <code>new Member()</code>(매개변수 없이)를 호출하면 컴파일 오류가 난다.</li>
+      <li>이 규칙은 "생성자가 필요 없는 단순한 클래스마다 개발자가 매번 빈 생성자를 써주는 번거로움을 덜어주자"는 편의 기능이다.</li>
+    </ul>
+
+    <h2>생성자 오버로딩과 this()</h2>
+    <ul>
+      <li>메서드 오버로딩처럼 생성자도 <strong>매개변수 구성을 다르게</strong> 여러 개 만들 수 있다 — 예: 성적까지 받는 생성자와, 성적 없이 이름·나이만 받고 기본 성적(50점)을 매기는 생성자를 함께 제공.</li>
+      <li>오버로딩된 생성자끼리 초기화 로직이 겹치면, <code>this(name, age, 50)</code>처럼 <strong><code>this()</code></strong>를 호출해 "자기 자신의 다른 생성자"에 로직을 위임할 수 있다 — 중복 코드 제거.</li>
+      <li><code>this()</code> 호출에는 엄격한 규칙이 있다 — 반드시 <strong>생성자 코드의 첫 줄</strong>에만 올 수 있다. 이 규칙을 어기면 "Call this() must be first statement in constructor body" 컴파일 오류가 난다. 또한 <code>this()</code>를 호출한다고 객체가 두 개 생기는 게 아니라, 이미 생성 중인 같은 객체의 초기화 로직을 이어서 실행하는 것뿐이다.</li>
+    </ul>
+    <pre><code>class Member {
+    String name;
+    int age;
+    int grade;
+
+    Member(String name, int age, int grade) {
+        this.name = name;
+        this.age = age;
+        this.grade = grade;
+    }
+
+    Member(String name, int age) {
+        this(name, age, 50); // 반드시 첫 줄 — 다른 생성자에 위임
+    }
+}</code></pre>
+
+    <h2>정리</h2>
+    <ul>
+      <li>생성자는 클래스 이름과 같고 반환 타입이 없는 특별한 메서드로, 객체 생성과 동시에 초기화를 강제·보장한다.</li>
+      <li><code>this</code>는 인스턴스 자기 자신을 가리키는 참조값 — 매개변수와 멤버 변수의 이름이 겹칠 때 멤버 변수 쪽을 명확히 지목하는 용도로 쓴다.</li>
+      <li>생성자를 하나도 안 만들면 자바가 빈 기본 생성자를 대신 만들어주지만, 하나라도 직접 만들면 그 혜택은 사라진다.</li>
+      <li>생성자 오버로딩으로 다양한 초기화 방식을 제공할 수 있고, <code>this()</code>(반드시 첫 줄)로 그 사이의 중복을 줄일 수 있다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 기본편",
+      courseHome: "index.html",
+      currentId: "section-04",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

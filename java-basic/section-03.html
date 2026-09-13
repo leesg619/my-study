@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 3 - 김영한의 실전 자바 기본편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-03"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 기본편</p>
+    <h1>3. 객체 지향 프로그래밍</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 기본편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>절차 지향 vs 객체 지향</h2>
+    <ul>
+      <li><strong>절차 지향 프로그래밍</strong>: 이름 그대로 절차(실행 순서)를 지향한다. "어떻게 동작할까"에 초점을 맞추고, 데이터와 그 데이터를 처리하는 로직이 서로 분리되어 있다. 지금까지 작성해온 코드는 클래스와 객체를 썼더라도 전부 절차 지향이었다.</li>
+      <li><strong>객체 지향 프로그래밍</strong>: 객체를 지향한다. "무엇이 있어야 하고, 그 속성과 기능을 어떻게 하나로 묶을까"에 초점을 맞춘다 — 데이터(속성)와 그 데이터를 다루는 메서드(기능)가 하나의 객체 안에 함께 들어간다.</li>
+      <li>둘은 서로 대립하는 개념이 아니라 <strong>초점의 차이</strong>다. 단순히 클래스로 데이터를 묶었다고 객체 지향이 되는 게 아니라, 그 데이터를 다루는 기능까지 같은 클래스 안에 들어가야 진짜 객체 지향이다.</li>
+    </ul>
+
+    <h2>절차 지향으로 시작 — 음악 플레이어 예제</h2>
+    <ul>
+      <li>1단계: <code>volume</code>, <code>isOn</code>을 지역 변수로 두고 순서대로 켜기 → 볼륨 조절 → 상태 확인 → 끄기를 처리 — 전형적인 절차 지향.</li>
+      <li>2단계(데이터 묶음): <code>MusicPlayerData</code> 클래스를 만들어 <code>volume</code>, <code>isOn</code>을 멤버 변수로 묶는다. 데이터가 한 곳에 모이니 프로그램이 복잡해져도 어디서 찾을지 명확해진다 — 하지만 여전히 이 데이터를 조작하는 로직은 <code>Main</code> 쪽에 별도로 남아있다.</li>
+      <li>3단계(메서드 추출): 반복되는 켜기/끄기/볼륨 조절/상태 출력 로직을 각각 메서드로 뽑아낸다. 중복이 줄고 가독성이 좋아지지만, <strong>데이터는 <code>MusicPlayerData</code> 클래스에, 기능은 <code>Main</code> 클래스의 메서드에</strong> 여전히 나뉘어 있다는 근본 문제는 남는다.</li>
+      <li>데이터와 기능이 이렇게 다른 곳에 있으면, 데이터가 바뀔 때마다 그 데이터를 다루는 기능 코드도 같이 찾아가 고쳐야 한다 — 관리 포인트가 두 곳으로 늘어나는 유지보수의 약점.</li>
+    </ul>
+
+    <h2>클래스와 메서드 — 데이터와 기능을 한 곳에</h2>
+    <ul>
+      <li>클래스는 멤버 변수(데이터)뿐 아니라 <strong>메서드(기능)</strong>도 가질 수 있다. 외부의 별도 메서드로 값을 조작하던 것을, 그 값을 가진 클래스 내부에 메서드로 넣어버리면 데이터와 기능이 한 클래스에 응집된다.</li>
+      <li><code>static</code>이 없는 메서드는 원칙적으로 <strong>객체를 먼저 생성해야</strong> 호출할 수 있다. 인스턴스 메서드 안에서는 <code>this.value</code>처럼 <strong>자기 자신의 멤버 변수</strong>에 접근할 수 있다.</li>
+      <li>이렇게 속성과 기능을 하나로 묶는 것이 객체 지향 프로그래밍의 본질이다.</li>
+    </ul>
+    <pre><code>class ValueData {
+    int value;
+
+    void add() {
+        this.value++; // 자기 자신의 멤버 변수에 접근
+    }
+}
+
+ValueData data = new ValueData();
+data.add(); // 객체를 생성해야 메서드 호출 가능</code></pre>
+
+    <h2>MusicPlayer를 온전한 객체로</h2>
+    <ul>
+      <li><code>MusicPlayer</code> 클래스 하나에 <code>volume</code>, <code>isOn</code> 속성과 <code>on()</code>, <code>off()</code>, <code>volumeUp()</code>, <code>volumeDown()</code>, <code>showStatus()</code> 기능을 전부 담는다 — 이 클래스 하나만 있으면 완전한 음악 플레이어를 만들 수 있다.</li>
+      <li>사용하는 쪽(<code>MusicPlayerMain</code>)은 <code>player.on()</code>, <code>player.volumeUp()</code>처럼 <strong>메서드만 호출</strong>하면 된다 — 내부에 <code>volume</code>이 어떻게 저장되고 계산되는지 몰라도 실제 음악 플레이어를 쓰듯 자연스럽게 쓸 수 있다.</li>
+    </ul>
+    <pre><code>class MusicPlayer {
+    int volume;
+    boolean isOn;
+
+    void on() { isOn = true; }
+    void off() { isOn = false; }
+    void volumeUp() { volume++; }
+    void volumeDown() { volume--; }
+    void showStatus() {
+        System.out.println("음악 플레이어 상태: " + isOn + ", 볼륨: " + volume);
+    }
+}
+
+MusicPlayer player = new MusicPlayer();
+player.on();
+player.volumeUp();
+player.showStatus();</code></pre>
+
+    <h2>캡슐화</h2>
+    <ul>
+      <li>속성과 기능을 하나의 클래스로 묶어, 필요한 기능만 메서드로 외부에 제공하는 것을 <strong>캡슐화</strong>라고 한다 — 데이터와 그 데이터를 다루는 기능이 하나의 캡슐 안에 들어있는 셈이다.</li>
+      <li>캡슐화의 실익은 변경에 강해진다는 것 — <strong>클래스 내부의 멤버 변수 이름</strong>(예: <code>volume</code> → <code>volume2</code>)을 바꿔도, 외부에서는 여전히 <code>volumeUp()</code>만 호출하므로 사용하는 쪽 코드는 전혀 손댈 필요가 없다. 내부 구현(볼륨을 2씩 올리도록 바꾸는 등)도 마찬가지로 클래스 내부만 고치면 끝난다.</li>
+      <li>반대로 <strong>외부에 공개된 메서드의 이름이나 시그니처</strong>(예: <code>volumeUp</code> → <code>volumeUp2</code>)를 바꾸면, 그 메서드를 호출하는 모든 곳을 찾아 함께 고쳐야 한다 — 그래서 공개 기능(메서드)의 이름은 함부로 바꾸기 어렵고, 반대로 숨겨진 내부 데이터는 자유롭게 바꿀 수 있어야 좋은 설계다.</li>
+    </ul>
+
+    <h2>정리</h2>
+    <ul>
+      <li>절차 지향은 "어떻게 실행할까"(순서), 객체 지향은 "무엇이 있어야 하고 속성·기능을 어떻게 묶을까"(구조)에 초점을 둔다 — 둘은 우열이 아니라 관점의 차이다.</li>
+      <li>세상 모든 사물은 속성(데이터)과 기능(행동)으로 추상화할 수 있다 — 자동차는 색상·속도(속성)와 액셀·브레이크(기능), 게임 캐릭터는 레벨·경험치(속성)와 이동·공격(기능)을 가진다. 객체 지향은 이 방식을 그대로 프로그램에 옮긴 것이다.</li>
+      <li>데이터를 클래스로 묶는 것만으로는 부족하고, 그 데이터를 다루는 메서드까지 같은 클래스에 넣어야 진짜 객체 지향이 된다.</li>
+      <li>캡슐화 덕분에 클래스 내부 구현은 자유롭게 바꾸면서도, 외부에 공개한 메서드 이름만 유지하면 사용하는 쪽 코드에 영향을 주지 않을 수 있다 — 이후 다룰 상속·다형성·추상화 같은 객체 지향의 다른 특징들도 이 캡슐화 위에서 쌓인다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 기본편",
+      courseHome: "index.html",
+      currentId: "section-03",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

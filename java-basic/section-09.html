@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 9 - 김영한의 실전 자바 기본편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-09"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 기본편</p>
+    <h1>9. 상속</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 기본편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>상속이 필요한 이유 — 전기차와 휘발유차</h2>
+    <ul>
+      <li><code>ElectricCar</code>는 <code>move()</code>·<code>charge()</code>, <code>GasCar</code>는 <code>move()</code>·<code>fillUp()</code>을 가진다. 둘 다 "자동차"라는 더 큰 개념에 속하고, <code>move()</code>라는 <strong>공통 기능</strong>은 완전히 겹친다 — 반면 충전 방식은 다르다.</li>
+      <li>이렇게 <strong>공통점과 차이점이 함께 있는 클래스들</strong>이 있을 때, 공통 부분을 뽑아 "부모" 클래스(<code>Car</code>)로 만들고 각자의 차이점만 자식 클래스에 남기는 것이 상속의 출발점이다.</li>
+    </ul>
+
+    <h2>상속 관계 — extends</h2>
+    <ul>
+      <li><code>class ElectricCar extends Car</code>처럼 <code>extends</code>로 부모를 명시하면, <code>Car</code>의 필드·메서드를 그대로 물려받는다. 자식 클래스는 자기만의 메서드(<code>charge()</code>)를 추가로 가질 수 있다.</li>
+      <li>상속 구조도의 화살표는 <strong>자식 → 부모</strong> 방향이다 — "내가 상대를 안다"는 뜻이라, <code>extends</code>로 부모를 명시한 자식만 부모를 알고, 부모는 자식의 존재를 전혀 모른다.</li>
+      <li>자바는 <strong>클래스의 다중 상속을 지원하지 않는다</strong> — 여러 부모를 동시에 상속하면 같은 이름의 메서드가 부모마다 다르게 정의됐을 때 어느 쪽을 호출해야 할지 모호해지는 <strong>다이아몬드 문제</strong>가 생기기 때문이다. (다중 상속 대신 인터페이스의 다중 구현은 가능 — 다형성 섹션에서 다룬다.)</li>
+    </ul>
+    <pre><code>class Car {
+    void move() { System.out.println("자동차, 이동"); }
+}
+class ElectricCar extends Car {
+    void charge() { System.out.println("충전"); }
+}</code></pre>
+
+    <h2>상속과 메모리 구조</h2>
+    <ul>
+      <li>상속은 단순히 "부모 필드·메서드를 물려받는다"는 것 이상이다 — <code>new ElectricCar()</code>를 하면 <strong>메모리 안에 자식과 부모가 동시에</strong> 생긴다(하나의 인스턴스 안에 <code>Car</code> 영역과 <code>ElectricCar</code> 영역이 함께 존재).</li>
+      <li>메서드를 호출하면, <strong>호출에 쓰인 변수의 타입부터</strong> 메서드를 찾기 시작한다. <code>electricCar.charge()</code>는 <code>ElectricCar</code>에서 바로 찾아 호출되고, <code>electricCar.move()</code>는 <code>ElectricCar</code>에 없으므로 <strong>부모(<code>Car</code>)로 올라가 찾는다</strong>. 최상위까지 올라가도 없으면 컴파일 오류.</li>
+      <li>이 "타입 기준으로 찾다가 없으면 부모로 올라간다"는 탐색 규칙이 뒤에 나올 <strong>다형성</strong>을 이해하는 토대가 된다.</li>
+    </ul>
+
+    <h2>상속과 기능 추가 — "확장"</h2>
+    <ul>
+      <li>모든 차종에 공통으로 필요한 <code>openDoor()</code>를 부모 <code>Car</code>에 <strong>한 번만</strong> 추가하면, <code>ElectricCar</code>·<code>GasCar</code> 등 모든 자식이 코드 수정 없이 자동으로 그 기능을 갖게 된다.</li>
+      <li>새 차종(<code>HydrogenCar</code>)을 추가할 때도 <code>Car</code>를 상속하면 <code>move()</code>·<code>openDoor()</code>는 공짜로 얻고, 수소차만의 고유 기능(<code>fillHydrogen()</code>)만 새로 작성하면 된다.</li>
+      <li><code>extends</code>가 "확장"이라는 단어 그대로, 상속은 기존 개념 위에 새로운 기능을 얹어 더 구체적인 개념으로 넓혀가는 과정이다.</li>
+    </ul>
+
+    <h2>메서드 오버라이딩</h2>
+    <ul>
+      <li>부모의 기능이 마음에 안 들 때, 자식 클래스에서 <strong>같은 시그니처의 메서드를 다시 정의</strong>해 덮어쓸 수 있다 — 이것이 <strong>오버라이딩</strong>. 매개변수만 다르게 여러 메서드를 만드는 <strong>오버로딩</strong>과는 완전히 다른 개념이니 혼동하지 말 것.</li>
+      <li><strong><code>@Override</code></strong> 애노테이션을 붙이는 습관이 중요하다 — 메서드 이름을 잘못 적는 등 실수로 오버라이딩이 안 됐을 때, <code>@Override</code>가 있으면 컴파일러가 즉시 오류로 잡아준다. 없으면 그냥 새로운 메서드가 하나 추가된 것으로 조용히 넘어가 버그가 숨는다.</li>
+      <li>오버라이딩 조건: 메서드 이름·매개변수(타입/순서/개수)·반환 타입이 같아야 하고, <strong>접근 제어자는 부모보다 더 좁아질 수 없다</strong>(넓히는 건 가능). 예외도 부모보다 더 많이 선언할 수 없다.</li>
+      <li><strong>오버라이딩이 불가능한 경우</strong>: <code>static</code>(클래스 소속이라 인스턴스 다형성과 무관), <code>final</code>(애초에 재정의 금지가 목적), <code>private</code>(자식이 접근조차 못 함), 생성자(이름이 클래스명이라 상속 개념 자체가 적용 안 됨).</li>
+      <li>메서드 호출 시에도 앞서 배운 "호출 타입에서 먼저 찾는다" 원칙이 그대로 적용된다 — 자식에 오버라이딩된 메서드가 있으면 부모까지 갈 필요 없이 거기서 멈춘다.</li>
+    </ul>
+    <pre><code>class ElectricCar extends Car {
+    @Override
+    void move() {
+        System.out.println("전기차, 빠르게 이동"); // 부모의 move()를 덮어씀
+    }
+}</code></pre>
+
+    <h2>상속과 접근 제어자</h2>
+    <ul>
+      <li>UML 표기로 <code>+</code>는 public, <code>#</code>는 protected, <code>~</code>는 default, <code>-</code>는 private을 뜻한다.</li>
+      <li>부모·자식이 <strong>다른 패키지</strong>에 있을 때가 접근 제어자의 진짜 시험대다 — <code>public</code>·<code>protected</code> 멤버는 자식이 접근할 수 있지만, <code>default</code>·<code>private</code> 멤버는 접근할 수 없다(<code>protected</code>가 "같은 패키지 + 상속 관계"까지 열어준다는 정의가 여기서 실제로 확인된다).</li>
+      <li>앞서 배운 메모리 구조(부모·자식 영역이 객체 내부에서 분리되어 존재)가 여기서도 그대로 적용된다 — 영역이 나뉘어 있기 때문에 그 경계를 넘는 접근은 접근 제어자의 통제를 받는다.</li>
+    </ul>
+
+    <h2>super — 부모를 명시적으로 가리키기</h2>
+    <ul>
+      <li><code>this</code>가 "나 자신"이듯, <code>super</code>는 "내 부모"를 가리킨다. 자식과 부모에 <strong>이름이 같은 필드나 메서드</strong>가 있을 때, 아무 표시 없이 쓰면 자식 것이 우선 적용된다 — 부모 것을 쓰고 싶다면 <code>super.value</code>, <code>super.hello()</code>처럼 명시해야 한다.</li>
+      <li><code>this</code>는 생략 가능하지만(가까운 스코프부터 자동으로 찾아줌), <code>super</code>는 생략하면 자동으로 부모를 찾아주는 게 아니라 아예 자식의 멤버로 해석돼버리므로 <strong>부모 것이 필요하면 반드시 명시</strong>해야 한다.</li>
+    </ul>
+
+    <h2>super — 생성자 호출</h2>
+    <ul>
+      <li>상속 관계에서 인스턴스를 만들면 부모와 자식이 메모리에 함께 생긴다고 했다 — 그 말은 <strong>부모의 생성자도 반드시 호출되어야</strong> 한다는 뜻이다. 자식 생성자는 자기 로직을 실행하기 전에 반드시 부모 생성자를 먼저 호출해야 하며, 이를 위한 게 <code>super(...)</code>다.</li>
+      <li>부모에 <strong>매개변수 없는 기본 생성자만 있다면</strong> <code>super()</code> 호출은 생략해도 된다 — 자바 컴파일러가 자식 생성자 첫 줄에 자동으로 <code>super()</code>를 끼워 넣어주기 때문. 반대로 부모에 <strong>매개변수 있는 생성자만 있고</strong> 기본 생성자가 없다면, 자식은 반드시 <code>super(값)</code>을 명시적으로 호출해야 한다.</li>
+      <li>생성자 실행 순서는 <strong>항상 최상위 부모부터 시작해서 자식 쪽으로 내려온다</strong> — 자식이 부모의 데이터를 활용할 수 있으려면 부모가 먼저 초기화되어 있어야 하기 때문에 합리적인 순서다.</li>
+      <li><code>this(...)</code>로 같은 클래스의 다른 생성자를 호출하더라도, 그 체인의 끝에서는 결국 <strong><code>super()</code>가 반드시 한 번은 호출되어야</strong> 한다 — 생성자의 첫 줄은 언제나 <code>this(...)</code> 또는 <code>super(...)</code> 둘 중 하나(혹은 생략된 암묵적 <code>super()</code>)다.</li>
+    </ul>
+    <pre><code>class ClassB extends ClassA {
+    ClassB(int value) {
+        super(value); // 부모 생성자 먼저 호출 — 반드시 첫 줄
+        // 이후 자식 초기화 로직
+    }
+}</code></pre>
+
+    <h2>final과 상속</h2>
+    <ul>
+      <li><code>final class</code>는 더 이상 상속할 수 없다(다른 클래스가 <code>extends</code> 할 수 없음). <code>final method</code>는 오버라이딩할 수 없다 — "더는 확장/재정의를 허용하지 않겠다"는 명시적 선언이다.</li>
+    </ul>
+
+    <h2>정리</h2>
+    <ul>
+      <li>상속은 공통 기능을 부모로 뽑아 코드 중복을 줄이는 도구이며, 실제로는 인스턴스 내부에 부모·자식 영역이 함께 생성되는 메모리 구조로 구현된다.</li>
+      <li>메서드/필드 탐색은 항상 "호출에 쓰인 타입에서 시작해서, 없으면 부모로 올라간다"는 규칙을 따른다 — 오버라이딩·다형성의 토대.</li>
+      <li><code>super</code>는 이름이 겹칠 때 부모를 명시적으로 가리키는 키워드이며, 특히 생성자에서는 "부모 먼저 초기화"를 강제하는 필수 규칙으로 등장한다.</li>
+      <li><code>final</code>은 클래스에 걸면 상속 자체를 막고, 메서드에 걸면 오버라이딩을 막는다 — 접근 제어자와 함께 "의도치 않은 변경을 막는" 자바의 대표적 제약 장치들이다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 기본편",
+      courseHome: "index.html",
+      currentId: "section-09",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

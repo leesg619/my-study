@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 12 - 김영한의 실전 자바 기본편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-12"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 기본편</p>
+    <h1>12. 다형성과 설계</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 기본편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>좋은 객체지향이란 — 역할과 구현</h2>
+    <ul>
+      <li>객체지향이 "유연하고 변경이 용이하다"는 말은, 레고 블록을 갈아 끼우듯, USB 규격에 맞는 장비를 바꿔 끼우듯 <strong>컴포넌트를 쉽게 교체할 수 있다</strong>는 뜻이다. 이 유연성의 핵심 수단이 <strong>다형성</strong>이다.</li>
+      <li>세상을 <strong>역할(인터페이스)</strong>과 <strong>구현(실제로 그 역할을 수행하는 객체)</strong>으로 나눠 생각하면 이해가 쉽다.
+        <ul>
+          <li><strong>자동차 비유</strong>: 운전자는 "자동차"라는 역할만 알면 된다. 실제로 그게 K3든, 아반떼든, 테슬라든 — <strong>운전자는 운전 방법을 바꿀 필요가 없다</strong>.</li>
+          <li><strong>연극 무대 비유</strong>: "로미오 역할"만 정해져 있으면 배우(구현)가 바뀌어도 공연(다른 배우들과의 협력)은 그대로 진행된다.</li>
+        </ul>
+      </li>
+      <li>이 원리를 자바 코드로 옮기면: <strong>클라이언트는 인터페이스(역할)에만 의존</strong>하고, 실행 시점에 어떤 구현 객체가 연결되는지는 자유롭게 바뀔 수 있다. 다형성의 본질은 바로 이 <strong>"실행 시점에 구현체를 유연하게 교체할 수 있다"</strong>는 것 — 그 출발점은 객체 사이의 <strong>협력 관계</strong>(요청하는 쪽 = 클라이언트, 응답하는 쪽 = 서버)다.</li>
+      <li>단, 역할(인터페이스) 자체가 바뀌면 그 역할에 의존하는 클라이언트와 모든 구현체가 함께 흔들린다 — 그래서 <strong>인터페이스를 안정적으로 설계하는 일이 매우 중요</strong>하다.</li>
+    </ul>
+
+    <h2>역할과 구현을 분리하지 않았을 때 — 운전자·자동차 예제</h2>
+    <ul>
+      <li>1단계: <code>Driver</code>가 <code>K3Car</code> <strong>타입 자체를</strong> 멤버 변수로 들고 있다. <code>setK3Car()</code>로 참조값을 주입받고 <code>drive()</code>에서 <code>k3Car.startEngine()</code> 등을 직접 호출한다 — <code>Driver</code>가 "K3Car"라는 <strong>구체적인 구현</strong>을 알고 있는 상태.</li>
+      <li>2단계: <code>Model3Car</code>라는 새 차종이 추가되면, <code>Driver</code>에 <code>setModel3Car()</code>를 새로 추가하고 <code>if-else</code>로 "지금 어떤 차가 세팅되어 있는지" 분기 처리를 해야 한다 — <strong>차종이 늘어날 때마다 <code>Driver</code> 코드를 계속 고쳐야</strong> 하는 근본적인 문제가 드러난다.</li>
+      <li>원인은 명확하다 — <strong>역할과 구현을 분리하지 않았기 때문</strong>. <code>Driver</code>가 구체적인 자동차 클래스를 직접 알고 있는 한, 자동차 종류가 늘어날 때마다 <code>Driver</code>도 함께 변경될 수밖에 없다.</li>
+    </ul>
+
+    <h2>역할과 구현을 분리했을 때 — Car 인터페이스</h2>
+    <ul>
+      <li><code>Car</code> 인터페이스를 정의하고(<code>startEngine()</code>, <code>offEngine()</code>, <code>pressAccelerator()</code>), <code>K3Car</code>·<code>Model3Car</code>가 이를 구현한다.</li>
+      <li><code>Driver</code>는 이제 <strong><code>Car</code> 타입</strong>의 멤버 변수 하나만 가진다. <code>setCar(Car car)</code>로 어떤 구현체든 주입받고, <code>driveCar()</code> 안에서는 <code>Car</code> 인터페이스에 정의된 메서드만 호출한다 — <code>Driver</code>는 <strong>K3Car·Model3Car라는 이름 자체를 전혀 모른다</strong>.</li>
+      <li><code>setCar(new K3Car())</code>로 운전하다가 <code>setCar(new Model3Car())</code>로 바꿔도 <strong><code>Driver</code>의 코드는 단 한 줄도 바뀌지 않는다</strong> — "부모(<code>Car</code>)는 자식(<code>K3Car</code>, <code>Model3Car</code>)을 담을 수 있다"는 다형적 참조와, 실제 호출 시 오버라이딩된 구현체의 메서드가 실행된다는 메서드 오버라이딩이 합쳐져 이 유연함을 만든다.</li>
+    </ul>
+    <pre><code>interface Car {
+    void startEngine();
+    void offEngine();
+    void pressAccelerator();
+}
+class Driver {
+    private Car car; // 구체 타입이 아니라 역할(인터페이스)만 안다
+    void setCar(Car car) { this.car = car; }
+    void driveCar() {
+        car.startEngine();
+        car.pressAccelerator();
+        car.offEngine();
+    }
+}</code></pre>
+
+    <h2>OCP 원칙 — 확장에는 열려있고 변경에는 닫혀있다</h2>
+    <ul>
+      <li><strong>OCP(Open-Closed Principle)</strong>: "기능을 확장할 순 있지만, 기존 코드는 변경되지 않아야 한다" — 언뜻 모순처럼 들리는 말이지만, 앞의 <code>Car</code> 예제가 바로 그 실체다.</li>
+      <li><code>NewCar</code>라는 완전히 새로운 차를 추가해도 — <code>Car</code> 인터페이스를 구현하기만 하면 — <strong><code>Driver</code>(핵심 클라이언트 코드)는 손댈 필요가 없다</strong>. 이것이 "확장에는 열려있다."</li>
+      <li>반면 <code>new NewCar()</code>를 만들어서 <code>driver.setCar(...)</code>로 연결해주는 <strong><code>main</code>(조립을 담당하는 부분)은 당연히 변경</strong>된다 — OCP가 말하는 "변경되지 않아야 할 코드"는 <strong>핵심 로직을 수행하는 클라이언트 코드</strong>(여기선 <code>Driver</code>)이지, 객체들을 엮어주는 조립 코드까지 포함하는 게 아니다.</li>
+      <li>이 원칙을 가능하게 하는 두 축이 바로 <strong>다형성</strong>과 <strong>역할·구현의 분리</strong>다. 알고리즘(구현)을 클라이언트 코드 변경 없이 교체할 수 있게 하는 디자인 패턴인 <strong>전략(Strategy) 패턴</strong>도 본질적으로 같은 구조 — <code>Car</code> 인터페이스가 "전략"이고 각 차량이 "전략의 구현체"인 셈이다.</li>
+    </ul>
+
+    <h2>정리</h2>
+    <ul>
+      <li>객체지향의 유연함은 "역할(인터페이스)과 구현(구현 클래스)을 분리"하는 데서 나온다 — 클라이언트는 역할에만 의존하고, 구현체는 실행 시점에 자유롭게 갈아 끼울 수 있다.</li>
+      <li>구현에 직접 의존하면(<code>Driver</code>가 <code>K3Car</code>를 직접 앎) 새 구현이 추가될 때마다 클라이언트 코드를 고쳐야 하지만, 역할에 의존하면 클라이언트 코드는 그대로 둔 채 구현체만 늘릴 수 있다.</li>
+      <li>OCP 원칙("확장엔 열려있고 변경엔 닫혀있다")은 이 역할·구현 분리 구조가 실제로 만들어내는 결과를 설명하는 원칙이다 — 핵심 클라이언트 코드는 안 바뀌고, 새로운 구현을 연결해주는 조립 코드만 바뀐다.</li>
+      <li>인터페이스 자체가 잘못 설계되면 이 모든 유연함이 무너지므로, 역할을 안정적으로 설계하는 것이 다형성을 제대로 활용하는 첫걸음이다. (스프링 프레임워크의 IoC/DI도 결국 이 다형성을 편리하게 다루기 위한 도구라는 점만 짚고 다음 과정으로 넘어간다.)</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 기본편",
+      courseHome: "index.html",
+      currentId: "section-12",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

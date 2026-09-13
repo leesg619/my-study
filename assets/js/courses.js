@@ -9,6 +9,12 @@
 window.COURSES = [
   {
     tag: "Java",
+    title: "김영한의 실전 자바 - 기본편",
+    description: "인프런 김영한 강의. 클래스, 객체지향, 상속과 다형성 같은 자바 기본기를 정리합니다.",
+    href: "java-basic/index.html",
+  },
+  {
+    tag: "Java",
     title: "김영한의 실전 자바 - 중급 1편",
     description: "인프런 김영한 강의. 섹션별 핵심 내용과 코드 예제를 정리합니다.",
     href: "java-intermediate-1/index.html",

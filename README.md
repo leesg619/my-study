@@ -8,5 +8,6 @@ study anything
 
 - 새 섹션 추가: 강의 폴더의 `_section-template.html`을 복사해 채운 뒤 `sections.js` 배열에 한 줄 추가
 - 새 강의 추가: 루트에 새 폴더를 만들고 `assets/js/courses.js`에 카드 항목 추가
+- 인프런 강의는 강의 `index.html`의 섹션 목록 아래에 **복습 가이드**를 둠 (PDF → 정리 노트 → 인프런 "정리" 영상 순서 + 챕터별 바로가기, 마지막 "다음으로" 영상 안내) — `java-basic/index.html` 참고
 
 GitHub Pages는 저장소 Settings → Pages에서 `Deploy from a branch` → `main` / `(root)`로 설정하면 활성화됩니다.

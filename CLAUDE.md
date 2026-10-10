@@ -33,7 +33,7 @@ Pure static HTML/CSS/vanilla JS, no build step, no bundler, no npm — every pag
 
 ### Writing Inflearn-course notes: lecture-first, PDF as a fact-check
 
-This routine applies to every course backed by a 김영한 Inflearn lecture with a copyrighted PDF folder — currently `java-intermediate-1` (`java-intermediate-1-pdf/`, "실전 자바 - 중급 1편", `courseId: 333308`) and `java-basic` (`java-basic-pdf/`, "김영한의 실전 자바 - 기본편"). Out of respect for the instructor, section pages must **not** be a transcription or paraphrase-of-the-slides. The lecture content (via MCP) is the primary source; the PDF may only be used afterward as a secondary accuracy check, never as the thing being rewritten:
+This routine applies to every course backed by a 김영한 Inflearn lecture with a copyrighted PDF folder — currently `java-intermediate-1` (`java-intermediate-1-pdf/`, "실전 자바 - 중급 1편", `courseId: 333308`) and `java-basic` (`java-basic-pdf/`, "김영한의 실전 자바 - 기본편", `courseId: 332506`). Out of respect for the instructor, section pages must **not** be a transcription or paraphrase-of-the-slides. The lecture content (via MCP) is the primary source; the PDF may only be used afterward as a secondary accuracy check, never as the thing being rewritten:
 
 1. **Lecture → HTML draft.** Call the Inflearn MCP's `get_curriculum` (with that course's `courseId`) to map section/unit IDs — PDF chapter numbers don't line up 1:1 with video units (one PDF file can span several units, e.g. "1. Object 클래스" = units 212188–212198). Then call `get_lecture_content` for each relevant unit — it returns a timestamped breakdown of what the instructor actually said (explanation flow, analogies, example code, verbatim quotes), not just slide text. Skip units that are just "문제와 풀이" (quiz) or pure environment setup.
 2. Write the section page by paraphrasing that explanation flow, examples, and reasoning in your own words. Keeping the instructor's underlying teaching structure (e.g. problem → limitation → solution, or bad-example → good-example) is fine and often correct when that's genuinely how the concept was taught — the thing to avoid is mechanically reproducing the MCP response's own `도입/본론/마무리` template on every section regardless of content.
@@ -47,9 +47,22 @@ This routine applies to every course backed by a 김영한 Inflearn lecture with
 1. Create a new folder at the repo root (sibling to `java-intermediate-1`).
 2. Copy that course's `index.html`, `_section-template.html`, and `sections.js` as a starting point, and adjust `courseTitle`/`courseHome` in each page's `initSectionPage`/`initCourseIndexPage` call.
 3. Add one entry to `assets/js/courses.js`.
+4. If it's an Inflearn course, add a 복습 가이드 to its `index.html` (see below).
+
+### Course index page: 복습 가이드 (Inflearn courses)
+
+Every Inflearn-backed course's `index.html` ends with a short `<h2>복습 가이드</h2>` block — a note to future-me on how to re-review a chapter. `java-basic/index.html` and `java-intermediate-1/index.html` are the reference; copy that block and swap the IDs/titles.
+
+- **Placement**: *below* `<h2>섹션 목록</h2>` + `#section-list` (the section list stays first), as the last thing in `main.content`.
+- **3-step order per chapter** (`<ol>`): ① PDF 강의자료 — 해당 챕터 PDF → ② 정리 노트 — 이 사이트의 해당 섹션 페이지 → ③ 정리 영상 — 인프런에서 그 챕터의 마지막 "정리" 강의 하나. Keep step ① that terse: **no local folder paths or file-naming notes** (they change, and the PDF folder is gitignored anyway — never link to a PDF).
+- **"다음으로" line**: one `<p>` pointing at the course's final "다음으로" lecture (video link + its section note) as the place to restart after a long break.
+- **Per-chapter shortcut list** inside a collapsed `<details>` ("챕터별 노트 · 정리 영상 바로가기"): one `<li>` per chapter (excluding "다음으로") = section link · "정리 영상" link. Get unit IDs from `get_curriculum` — use the unit titled `정리` in each curriculum section. Link format: `https://www.inflearn.com/courses/lecture?courseId=<id>&amp;unitId=<id>` (escape `&` as `&amp;`).
+- If a chapter has no `정리` unit (e.g. 중급 1편 ch.7, ch.9 — the "…1" half of a two-part topic), write "정리 영상 없음 → N장 정리 영상으로" pointing at the paired chapter instead of linking an arbitrary unit.
+- Hardcode this list as static HTML (not generated from `sections.js`) so it renders without JS.
 
 ### Gotchas learned the hard way
 
+- **The lecture PDFs' Korean text extracts as garbage** (embedded AppleSDGothicNeo with no ToUnicode map; PyMuPDF gives `�`, pypdf gives odd Unicode like `৘৻ ୊ܻ`). Fix: extract with pypdf, then map each char `chr(1086 + i)` → the i-th Hangul syllable of KS X 1001 (decode bytes `0xB0A1`–`0xC8FE` with `euc-kr`, skipping invalid). Result is readable enough to fact-check, with occasional swapped syllables.
 - **Never let a `*/` appear inside a `/** ... */` block comment**, even as part of a word — it silently closes the comment early and corrupts everything after it (bit us once in `layout.js`; the file that got broken loaded fine over HTTP with a 200, so a network check alone won't catch this — you have to actually execute/parse the JS).
 - **Escape `<`/`>` inside `<pre><code>` blocks** whenever the sample code contains generics (`List<String>`) or literal HTML tags — otherwise the browser parses them as real markup instead of text.
 - After editing anything under `assets/`, verify by actually starting a local server and loading pages in the browser tool (checking console errors + `get_page_text`/screenshots) — a plain `curl`/`fetch` 200 does not prove the JS parsed or executed correctly.

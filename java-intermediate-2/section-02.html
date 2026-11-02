@@ -18,7 +18,7 @@
     </blockquote>
 
     <h2>타입 매개변수 제한 — 동물병원 예제로 단계별로</h2>
-    <p>요구사항: 개 병원은 개만, 고양이 병원은 고양이만 받는다. 병원은 진찰(<code>checkup()</code> — 이름·크기 출력, <code>sound()</code> 호출)과 큰 동물 고르기(<code>bigger()</code>)를 제공한다.</p>
+    <p>요구사항: 개 병원은 개만, 고양이 병원은 고양이만 받는다. 병원은 진찰(<code>checkup()</code> — 이름·크기 출력, <code>sound()</code> 호출)과 큰 동물 고르기(<code>getBigger()</code>)를 제공한다.</p>
     <h3>시도 1 — 타입별 병원 클래스</h3>
     <ul>
       <li><code>DogHospital</code>, <code>CatHospital</code>을 따로 만든다.</li>
@@ -28,7 +28,7 @@
     <h3>시도 2 — 다형성 (<code>Animal</code>로 받기)</h3>
     <ul>
       <li><code>AnimalHospitalV1</code>의 필드와 매개변수를 부모 타입 <code>Animal</code>로 두면 클래스 하나로 끝난다. <code>Animal</code>에 있는 <code>getName()</code>, <code>getSize()</code>, <code>sound()</code>도 호출할 수 있다 → 코드 재사용 ○.</li>
-      <li>대신 개 병원으로 쓰려던 객체에 고양이가 들어가도 막을 수 없고, <code>bigger()</code>가 <code>Animal</code>을 돌려주므로 <code>Dog</code>로 다운캐스팅해야 한다 → 잘못 넣으면 <code>ClassCastException</code>. 타입 안전 ✕.</li>
+      <li>대신 개 병원으로 쓰려던 객체에 고양이가 들어가도 막을 수 없고, <code>getBigger()</code>가 <code>Animal</code>을 돌려주므로 <code>Dog</code>로 다운캐스팅해야 한다 → 잘못 넣으면 <code>ClassCastException</code>. 타입 안전 ✕.</li>
     </ul>
     <h3>시도 3 — 제네릭 도입, 그런데 컴파일이 안 된다</h3>
     <pre><code>public class AnimalHospitalV2&lt;T&gt; {
@@ -57,7 +57,7 @@ new AnimalHospitalV2&lt;Integer&gt;(); // 동물과 무관해도 막을 수 없�
         animal.sound();
     }
 
-    public T bigger(T target) {
+    public T getBigger(T target) {
         return animal.getSize() &gt; target.getSize() ? animal : target;
     }
 }
@@ -65,7 +65,7 @@ new AnimalHospitalV2&lt;Integer&gt;(); // 동물과 무관해도 막을 수 없�
 AnimalHospitalV3&lt;Dog&gt; dogHospital = new AnimalHospitalV3&lt;&gt;();
 // dogHospital.set(new Cat("냐옹이", 300));        // 컴파일 오류
 // new AnimalHospitalV3&lt;Integer&gt;();               // 컴파일 오류
-Dog bigger = dogHospital.bigger(new Dog("멍멍이2", 200)); // 캐스팅 불필요</code></pre>
+Dog biggerDog = dogHospital.getBigger(new Dog("멍멍이2", 200)); // 캐스팅 불필요</code></pre>
     <ul>
       <li><code>T extends Animal</code>: <code>T</code>에는 <code>Animal</code>과 그 자식만 올 수 있다. 이때 <code>Animal</code>을 <strong>상한(upper bound)</strong>이라 부른다.</li>
       <li>컴파일러가 "적어도 <code>Animal</code>이다"라고 보장받으므로 <code>Animal</code>의 기능을 <code>T</code>에 호출할 수 있다. 실제 호출은 다형성대로 <code>Dog</code>의 오버라이딩된 <code>sound()</code>가 실행된다.</li>

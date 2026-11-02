@@ -112,7 +112,7 @@ private static void run(Set&lt;String&gt; set) {
         </ul>
       </li>
       <li>재해싱은 비싸기 때문에 <code>ArrayList</code>처럼 50%가 아니라 2배씩 넉넉히 늘려 횟수를 줄인다.</li>
-      <li><strong>버킷이 긴 경우의 최적화</strong>: 한 해시 인덱스에 데이터가 일정 수(약 8개) 이상 몰리면 연결 리스트를 트리로 자동 전환해 <code>O(n)</code>을 <code>O(log n)</code>으로 끌어내린다.</li>
+      <li><strong>버킷이 긴 경우의 최적화</strong>: 한 해시 인덱스에 데이터가 약 8개 이상 몰리면 연결 리스트를 트리로 자동 전환해 <code>O(n)</code>을 <code>O(log n)</code>으로 끌어내린다. JDK 17 소스 기준으로는 배열 크기가 64 이상일 때만 전환하고, 그보다 작으면 배열을 먼저 늘린다.</li>
       <li>전 세계 개발자가 쓰는 라이브러리라 이런 실전 최적화가 잔뜩 들어 있다 → 직접 구현보다 <strong>라이브러리를 쓰는 게 맞다</strong>.</li>
     </ul>
 

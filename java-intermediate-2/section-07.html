@@ -149,7 +149,7 @@ static int hashIndex(int value) {
     </table>
     <ul>
       <li>규칙: <code>equals()</code>가 <code>true</code>면 <code>hashCode()</code>도 반드시 같아야 한다. 반대로 해시 코드가 같다고 <code>equals()</code>가 <code>true</code>일 필요는 없다.</li>
-      <li>이 메서드들은 해시 자료 구조(<code>HashSet</code>, <code>HashMap</code> 등)를 쓸 때 필요하다. 리스트만 쓸 때는 필요 없을 수도 있다.</li>
+      <li><code>hashCode()</code>를 항상 재정의해야 하는 건 아니다. 해시 자료 구조(<code>HashSet</code>, <code>HashMap</code> 등)를 쓸 때 <code>equals()</code>와 함께 재정의한다.</li>
     </ul>
     <h3>좋은 해시 함수</h3>
     <ul>

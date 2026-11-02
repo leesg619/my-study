@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 2 - 김영한의 실전 자바 중급 2편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-02"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 중급 2편</p>
+    <h1>2. 제네릭 - Generic 2</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 중급 2편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>타입 매개변수 제한 — 동물병원 예제로 단계별로</h2>
+    <p>요구사항: 개 병원은 개만, 고양이 병원은 고양이만 받는다. 병원은 진찰(<code>checkup()</code> — 이름·크기 출력, <code>sound()</code> 호출)과 큰 동물 고르기(<code>bigger()</code>)를 제공한다.</p>
+    <h3>시도 1 — 타입별 병원 클래스</h3>
+    <ul>
+      <li><code>DogHospital</code>, <code>CatHospital</code>을 따로 만든다.</li>
+      <li>개 병원에 고양이를 넣으면 컴파일 오류 → 타입 안전 ○.</li>
+      <li>대신 타입만 다른 클래스가 복사된다 → 코드 재사용 ✕.</li>
+    </ul>
+    <h3>시도 2 — 다형성 (<code>Animal</code>로 받기)</h3>
+    <ul>
+      <li><code>AnimalHospitalV1</code>의 필드와 매개변수를 부모 타입 <code>Animal</code>로 두면 클래스 하나로 끝난다. <code>Animal</code>에 있는 <code>getName()</code>, <code>getSize()</code>, <code>sound()</code>도 호출할 수 있다 → 코드 재사용 ○.</li>
+      <li>대신 개 병원으로 쓰려던 객체에 고양이가 들어가도 막을 수 없고, <code>bigger()</code>가 <code>Animal</code>을 돌려주므로 <code>Dog</code>로 다운캐스팅해야 한다 → 잘못 넣으면 <code>ClassCastException</code>. 타입 안전 ✕.</li>
+    </ul>
+    <h3>시도 3 — 제네릭 도입, 그런데 컴파일이 안 된다</h3>
+    <pre><code>public class AnimalHospitalV2&lt;T&gt; {
+    private T animal;
+
+    public void checkup() {
+        // animal.getName();   // 컴파일 오류
+        // animal.sound();     // 컴파일 오류
+    }
+}
+
+new AnimalHospitalV2&lt;Integer&gt;(); // 동물과 무관해도 막을 수 없다</code></pre>
+    <ul>
+      <li>문제 1: 클래스를 정의하는 시점에 컴파일러는 <code>T</code>에 무엇이 들어올지 모른다. 뭐든 올 수 있으니 <code>T</code>는 <code>Object</code>로 간주되고, <code>Object</code>의 기능(<code>toString()</code>, <code>equals()</code> 등)만 쓸 수 있다.</li>
+      <li>문제 2: 타입 인자로 <code>Integer</code>, <code>Object</code>처럼 동물과 상관없는 타입도 들어온다.</li>
+      <li>→ 들어올 수 있는 타입의 범위를 좁혀야 한다.</li>
+    </ul>
+    <h3>해결 — <code>T extends Animal</code></h3>
+    <pre><code>public class AnimalHospitalV3&lt;T extends Animal&gt; {
+    private T animal;
+
+    public void set(T animal) { this.animal = animal; }
+
+    public void checkup() {
+        System.out.println("동물 이름: " + animal.getName()); // 이제 호출 가능
+        animal.sound();
+    }
+
+    public T bigger(T target) {
+        return animal.getSize() &gt; target.getSize() ? animal : target;
+    }
+}
+
+AnimalHospitalV3&lt;Dog&gt; dogHospital = new AnimalHospitalV3&lt;&gt;();
+// dogHospital.set(new Cat("냐옹이", 300));        // 컴파일 오류
+// new AnimalHospitalV3&lt;Integer&gt;();               // 컴파일 오류
+Dog bigger = dogHospital.bigger(new Dog("멍멍이2", 200)); // 캐스팅 불필요</code></pre>
+    <ul>
+      <li><code>T extends Animal</code>: <code>T</code>에는 <code>Animal</code>과 그 자식만 올 수 있다. 이때 <code>Animal</code>을 <strong>상한(upper bound)</strong>이라 부른다.</li>
+      <li>컴파일러가 "적어도 <code>Animal</code>이다"라고 보장받으므로 <code>Animal</code>의 기능을 <code>T</code>에 호출할 수 있다. 실제 호출은 다형성대로 <code>Dog</code>의 오버라이딩된 <code>sound()</code>가 실행된다.</li>
+      <li>앞의 문제가 전부 사라진다: 잘못된 동물 전달 ✕, 다운캐스팅 ✕, 무관한 타입 ✕, <code>Object</code> 기능만 사용 ✕ → <strong>재사용과 타입 안전을 함께 확보</strong>.</li>
+    </ul>
+
+    <h2>제네릭 메서드</h2>
+    <p>제네릭 타입과는 <strong>별개의 기능</strong>이다. 클래스 전체가 아니라 특정 메서드 하나에만 제네릭을 건다.</p>
+    <pre><code>public class GenericMethod {
+    public static &lt;T&gt; T genericMethod(T t) {
+        return t;
+    }
+
+    public static &lt;T extends Number&gt; T numberMethod(T t) {
+        return t;
+    }
+}
+
+Integer result = GenericMethod.&lt;Integer&gt;genericMethod(10); // 타입 인자 명시
+Integer inferred = GenericMethod.genericMethod(10);         // 인자 타입으로 추론 — 보통 이렇게 쓴다
+// GenericMethod.numberMethod("Hello");                     // 컴파일 오류</code></pre>
+    <ul>
+      <li>반환 타입 <strong>앞에</strong> <code>&lt;T&gt;</code>를 선언한다. 이 <code>T</code>는 그 메서드 안에서만 유효하다.</li>
+      <li>호출할 때 <code>메서드 이름 앞</code>에 타입 인자를 전달하지만, 컴파일러가 인자 타입을 보고 추론해 주므로 대부분 생략한다. 생략했을 뿐, 타입 인자가 정해지는 건 그대로다.</li>
+      <li>메서드에도 <code>extends</code>로 상한을 걸 수 있다.</li>
+    </ul>
+    <table>
+      <thead>
+        <tr><th></th><th>제네릭 타입</th><th>제네릭 메서드</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>선언 위치</td><td>클래스·인터페이스 이름 옆</td><td>메서드 반환 타입 앞</td></tr>
+        <tr><td>타입 결정 시점</td><td><strong>객체 생성</strong> 시점</td><td><strong>메서드 호출</strong> 시점</td></tr>
+        <tr><td><code>static</code> 메서드</td><td>타입 매개변수 사용 불가</td><td>사용 가능</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>제네릭 타입의 <code>T</code>는 인스턴스를 만들 때 결정되는데, <code>static</code> 메서드는 클래스 단위로 동작한다 → <code>static</code>에서는 쓸 수 없고, 필요하면 제네릭 메서드로 선언한다. 인스턴스 메서드도 제네릭 메서드가 될 수 있다.</li>
+    </ul>
+    <h3>활용과 우선순위</h3>
+    <pre><code>public class AnimalMethod {
+    public static &lt;T extends Animal&gt; void checkup(T t) { ... }
+
+    public static &lt;T extends Animal&gt; T getBigger(T t1, T t2) {
+        return t1.getSize() &gt; t2.getSize() ? t1 : t2;
+    }
+}</code></pre>
+    <ul>
+      <li>앞의 병원 기능을 객체 생성 없이 메서드만으로 호출할 수 있다.</li>
+      <li>클래스의 <code>T</code>와 메서드의 <code>T</code>가 이름이 같으면 <strong>메서드의 <code>T</code>가 우선</strong>한다 — 프로그래밍에서는 더 가깝고 구체적인 쪽이 이긴다.
+        <ul>
+          <li>이때 메서드의 <code>T</code>에 상한이 없으면 클래스의 <code>T extends Animal</code>과 상관없이 <code>Object</code> 기능만 쓸 수 있다.</li>
+          <li>헷갈리기만 하니 이름을 다르게 짓는 게 답이다 (<code>T</code>, <code>Z</code>).</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>와일드카드</h2>
+    <p>와일드카드(<code>?</code>)는 여러 타입이 들어올 수 있다는 뜻의 특수문자다. 핵심: <strong>제네릭 타입이나 제네릭 메서드를 선언하는 게 아니라, 이미 만들어진 제네릭 타입을 활용할 때 쓴다.</strong></p>
+    <pre><code>// 제네릭 메서드 — 호출할 때마다 T를 결정하는 과정이 있다
+static &lt;T&gt; void printGenericV1(Box&lt;T&gt; box) { ... }
+
+// 와일드카드 — 그냥 일반 메서드에 Box 매개변수가 있는 것
+static void printWildcardV1(Box&lt;?&gt; box) { ... }
+
+static void printWildcardV2(Box&lt;? extends Animal&gt; box) {
+    Animal animal = box.get(); // 상한 타입으로 꺼낸다
+}</code></pre>
+    <ul>
+      <li><strong>비제한 와일드카드</strong> <code>Box&lt;?&gt;</code>: 어떤 <code>Box</code>든 받는다. <code>? extends Object</code>와 같아서 꺼내면 <code>Object</code>다.</li>
+      <li><strong>상한 와일드카드</strong> <code>Box&lt;? extends Animal&gt;</code>: <code>Box&lt;Dog&gt;</code>, <code>Box&lt;Cat&gt;</code>은 받고 <code>Box&lt;Object&gt;</code>는 못 받는다. 꺼내면 상한인 <code>Animal</code>이다.</li>
+      <li>제네릭 메서드와 달리 타입을 결정하는 과정 없이 매개변수만 하나 받는 단순한 구조다 → 제네릭 타입·메서드를 정의할 필요가 없으면 <strong>와일드카드를 쓰는 것을 권장</strong>.</li>
+    </ul>
+    <h3>와일드카드로 안 되는 경우 — 전달한 타입을 그대로 돌려줘야 할 때</h3>
+    <pre><code>static &lt;T extends Animal&gt; T printAndReturnGeneric(Box&lt;T&gt; box) {
+    return box.get();
+}
+
+static Animal printAndReturnWildcard(Box&lt;? extends Animal&gt; box) {
+    return box.get();
+}
+
+Dog dog = printAndReturnGeneric(dogBox);        // T = Dog이므로 Dog 반환
+Animal animal = printAndReturnWildcard(dogBox); // Animal로만 받을 수 있다</code></pre>
+    <ul>
+      <li>제네릭 메서드는 <code>T</code>가 결정되면 반환 타입까지 함께 바뀐다. 와일드카드는 들어오는 값을 쓰기만 하고 타입을 바꿔 주지 않는다.</li>
+      <li>→ 호출 시점에 타입을 결정해야 하면 제네릭 타입이나 제네릭 메서드를, 그렇지 않으면 와일드카드를 쓴다.</li>
+    </ul>
+    <h3>하한 와일드카드</h3>
+    <ul>
+      <li><code>Box&lt;? super Animal&gt;</code>: <code>Animal</code>과 그 <strong>상위</strong> 타입만 받는다. <code>Box&lt;Object&gt;</code>, <code>Box&lt;Animal&gt;</code> ○ / <code>Box&lt;Dog&gt;</code>, <code>Box&lt;Cat&gt;</code> ✕.</li>
+      <li>하한은 와일드카드에서만 쓸 수 있다. 타입 매개변수를 선언할 때 <code>&lt;T super Animal&gt;</code>처럼 쓸 수는 없다.</li>
+    </ul>
+
+    <h2>타입 이레이저</h2>
+    <ul>
+      <li><strong>이레이저(eraser) = 지우개</strong>. 제네릭은 <strong>컴파일 시점에만 존재</strong>하고, 컴파일이 끝나면 타입 정보가 지워진다. <code>.java</code>에는 타입 매개변수가 있지만 <code>.class</code>에는 없다.</li>
+    </ul>
+    <pre><code>// 컴파일 전                       // 컴파일 후 (개념적으로)
+class Box&lt;T&gt; { T value; }          class Box { Object value; }
+Integer i = box.get();             Integer i = (Integer) box.get();
+
+class Hospital&lt;T extends Animal&gt;   class Hospital { Animal animal; ... }</code></pre>
+    <ul>
+      <li>컴파일러는 먼저 <code>T</code>를 타입 인자로 이해해 타입을 검사한 뒤 제네릭 정보를 지운다.</li>
+      <li>상한이 없는 <code>T</code>는 <code>Object</code>로, <code>T extends Animal</code>은 상한인 <code>Animal</code>로 바뀐다. 상한이 남으니 <code>Animal</code>의 메서드 호출에는 문제가 없다.</li>
+      <li>값을 꺼내는 곳에는 컴파일러가 <strong>다운캐스팅 코드를 자동으로 넣는다</strong>. 이미 컴파일 단계에서 타입을 검증했으므로 이 캐스팅은 안전하다.</li>
+      <li><strong>왜 이렇게 했나?</strong> 제네릭이 없던 기존 자바 코드와의 하위 호환을 지키기 위해서다. 컴파일러가 고생하고, 실행되는 코드는 옛날과 똑같이 맞춘다.</li>
+    </ul>
+    <h3>이레이저의 한계 — 런타임에 쓸 수 없는 것</h3>
+    <pre><code>class EraserBox&lt;T&gt; {
+    public boolean instanceCheck(Object param) {
+        return param instanceof T; // 컴파일 오류
+    }
+    public T create() {
+        return new T();            // 컴파일 오류
+    }
+}</code></pre>
+    <ul>
+      <li>런타임의 <code>T</code>는 <code>Object</code>일 뿐이다. <code>instanceof T</code>는 항상 <code>Object</code>와 비교하는 꼴이 되고, <code>new T()</code>는 항상 <code>new Object()</code>가 되어 버린다 → 자바가 둘 다 막아 둔다.</li>
+    </ul>
+
+    <h2>정리</h2>
+    <ul>
+      <li>타입 매개변수 제한: 범위를 좁혀 무관한 타입을 막고, 상한 타입의 기능을 쓸 수 있게 한다.</li>
+      <li>제네릭 메서드: 메서드 호출 시점에 타입을 결정한다. 와일드카드: 이미 정해진 제네릭 타입을 받아서 활용하는 단순한 도구.</li>
+      <li>타입 이레이저: 런타임에는 제네릭 정보가 없다 → <code>instanceof T</code>, <code>new T()</code> 불가.</li>
+      <li>실무에서 제네릭을 직접 깊게 설계할 일은 많지 않다. 라이브러리의 제네릭 코드를 <strong>읽고 이해할 수 있으면 충분</strong>하고, 공변·반공변 같은 내용은 필요해질 때 공부해도 된다. 나머지는 컬렉션 프레임워크를 쓰면서 자연스럽게 익힌다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 중급 2편",
+      courseHome: "index.html",
+      currentId: "section-02",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

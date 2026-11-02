@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 10 - 김영한의 실전 자바 중급 2편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-10"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 중급 2편</p>
+    <h1>10. 컬렉션 프레임워크 - 순회, 정렬, 전체 정리</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 중급 2편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>순회 — Iterable과 Iterator</h2>
+    <ul>
+      <li><strong>순회</strong>: 자료 구조의 데이터를 차례대로 접근해서 처리하는 것.</li>
+      <li>문제: 배열 리스트는 인덱스로, 연결 리스트는 <code>node.next</code>로, 해시 구조는 또 다르게… <strong>자료 구조마다 순회 방법이 다르고, 내부 구조까지 알아야 한다</strong>.</li>
+      <li>해결: 어떤 자료 구조든 같은 방법으로 순회하도록 인터페이스로 추상화한다.
+        <ul>
+          <li><strong><code>Iterable</code></strong>(반복 가능한): <code>iterator()</code>로 반복자를 돌려준다.</li>
+          <li><strong><code>Iterator</code></strong>(반복자): <code>hasNext()</code>로 다음 값이 있는지 묻고, <code>next()</code>로 값을 꺼내며 이동한다.</li>
+        </ul>
+      </li>
+    </ul>
+    <pre><code>public class MyArrayIterator implements Iterator&lt;Integer&gt; {
+    private int currentIndex = -1;
+    private int[] targetArr;
+
+    public MyArrayIterator(int[] targetArr) { this.targetArr = targetArr; }
+
+    @Override
+    public boolean hasNext() { return currentIndex &lt; targetArr.length - 1; }
+
+    @Override
+    public Integer next() { return targetArr[++currentIndex]; }
+}
+
+public class MyArray implements Iterable&lt;Integer&gt; {
+    private int[] numbers;
+
+    public MyArray(int[] numbers) { this.numbers = numbers; }
+
+    @Override
+    public Iterator&lt;Integer&gt; iterator() {
+        return new MyArrayIterator(numbers);
+    }
+}</code></pre>
+    <ul>
+      <li>반복자는 자기가 순회할 대상의 참조를 들고, 현재 위치를 스스로 관리한다.</li>
+      <li>구현체는 자료 구조마다 다르지만, 쓰는 쪽은 <code>Iterator</code> 인터페이스만 알면 된다.</li>
+    </ul>
+    <h3>향상된 for문의 비밀</h3>
+    <pre><code>for (int value : myArray) {          // 이렇게 쓰면
+    System.out.println(value);
+}
+
+Iterator&lt;Integer&gt; it = myArray.iterator(); // 컴파일러가 이렇게 바꿔 준다
+while (it.hasNext()) {
+    int value = it.next();
+    System.out.println(value);
+}</code></pre>
+    <ul>
+      <li>향상된 for문은 <strong>배열 또는 <code>Iterable</code> 구현체</strong>에 쓸 수 있다. <code>Iterable</code>이 아니면 컴파일 오류가 난다.</li>
+      <li>강사님이 인용한 말: 만드는 사람이 수고로우면 쓰는 사람이 편하고, 만드는 사람이 편하면 쓰는 사람이 수고롭다.</li>
+    </ul>
+    <h3>자바의 컬렉션과 Iterable</h3>
+    <ul>
+      <li><code>Collection</code>이 <code>Iterable</code>을 상속하므로 <code>List</code>, <code>Set</code>, <code>Queue</code> 등 모든 컬렉션을 같은 방식으로 순회할 수 있다.</li>
+      <li><code>Map</code>은 <code>Collection</code>이 아니어서 바로 순회할 수 없다 → <code>keySet()</code>, <code>values()</code>, <code>entrySet()</code>을 통해 순회한다.</li>
+      <li><code>ArrayList</code>의 반복자는 내부 클래스 <code>Itr</code>이고, <code>HashSet</code>은 <code>HashMap</code>의 <code>KeyIterator</code>를 쓴다. 쓰는 쪽은 몰라도 된다.</li>
+    </ul>
+    <pre><code>private static void printAll(Iterator&lt;Integer&gt; iterator) { ... }
+private static void foreach(Iterable&lt;Integer&gt; iterable) { ... }
+
+printAll(list.iterator());
+printAll(set.iterator());
+foreach(list);
+foreach(set);</code></pre>
+    <ul>
+      <li>인터페이스로 받으면 어떤 컬렉션이든 메서드 하나로 처리할 수 있다 → 다형성으로 재사용성이 극대화된다. 새 자료 구조도 두 인터페이스만 구현하면 기존 코드가 그대로 동작한다.</li>
+      <li>내부 표현을 노출하지 않고 순차 접근을 제공하는 이 구조가 <strong>이터레이터 패턴</strong>이다.</li>
+    </ul>
+
+    <h2>정렬 — Comparable과 Comparator</h2>
+    <ul>
+      <li><code>Arrays.sort()</code>로 간단히 정렬한다. 자바는 기본형 배열에 듀얼 피벗 퀵소트, 객체 배열에 팀소트를 사용하며 평균 <code>O(n log n)</code>이다.</li>
+      <li>정렬 알고리즘의 핵심은 두 값을 <strong>비교</strong>하는 것이고, 비교 기준만 바꾸면 결과가 달라진다. 자바는 복잡한 알고리즘은 숨기고 기준만 인터페이스로 추상화했다.</li>
+    </ul>
+    <h3>Comparator — 비교 기준을 외부에서 제공</h3>
+    <pre><code>static class AscComparator implements Comparator&lt;Integer&gt; {
+    @Override
+    public int compare(Integer o1, Integer o2) {
+        return (o1 &lt; o2) ? -1 : ((o1 == o2) ? 0 : 1);
+    }
+}
+
+Arrays.sort(array, new AscComparator());                // 오름차순
+Arrays.sort(array, new DescComparator());               // 내림차순
+Arrays.sort(array, new AscComparator().reversed());     // 뒤집기</code></pre>
+    <ul>
+      <li>규칙: 첫 번째 값이 작으면 음수, 같으면 0, 크면 양수.</li>
+      <li>내림차순은 결과에 <code>-1</code>을 곱하거나, <code>reversed()</code>로 뒤집는다.</li>
+    </ul>
+    <h3>Comparable — 객체의 기본 순서</h3>
+    <pre><code>public class MyUser implements Comparable&lt;MyUser&gt; {
+    private String id;
+    private int age;
+
+    @Override
+    public int compareTo(MyUser o) {
+        return this.age &lt; o.age ? -1 : (this.age == o.age ? 0 : 1); // 나이 오름차순
+    }
+}
+
+public class IdComparator implements Comparator&lt;MyUser&gt; {
+    @Override
+    public int compare(MyUser o1, MyUser o2) {
+        return o1.getId().compareTo(o2.getId());
+    }
+}
+
+Arrays.sort(users);                    // Comparable 사용 — 나이순
+Arrays.sort(users, new IdComparator()); // Comparator 우선 — 아이디순</code></pre>
+    <ul>
+      <li>직접 만든 객체는 뭐가 더 큰지 자바가 알 수 없다 → <code>Comparable</code>을 구현해 "나는 비교할 수 있다"고 알린다. 이 기본 순서를 <strong>자연 순서(natural ordering)</strong>라고 한다.</li>
+      <li>기본 순서 외의 기준이 필요하면 <code>Comparator</code>를 넘긴다. <strong><code>Comparator</code>가 있으면 그쪽이 우선</strong>이다.</li>
+      <li><strong>둘 다 없으면 <code>ClassCastException</code></strong>이 발생한다. <code>Integer</code>, <code>String</code> 같은 기본 클래스는 이미 <code>Comparable</code>을 구현하고 있다.</li>
+    </ul>
+    <h3>컬렉션 정렬</h3>
+    <pre><code>list.sort(null);                    // 자연 순서
+list.sort(new IdComparator());      // 기준 지정
+Collections.sort(list);             // 옛 방식 — list.sort() 권장
+
+Set&lt;MyUser&gt; treeSet = new TreeSet&lt;&gt;();                   // Comparable 사용
+Set&lt;MyUser&gt; idSet = new TreeSet&lt;&gt;(new IdComparator());   // Comparator 사용</code></pre>
+    <ul>
+      <li>정렬은 순서가 있는 <code>List</code> 같은 자료 구조에 쓴다.</li>
+      <li>객체가 자기 데이터를 스스로 정렬하는 <code>list.sort()</code>가 더 객체지향적이고 Java 1.8에 추가된 방식이라 이쪽을 권장한다.</li>
+      <li><code>TreeSet</code>, <code>TreeMap</code>은 저장 시점에 왼쪽·오른쪽을 결정해야 하므로 <strong>비교 기준이 필수</strong>다. 없으면 역시 <code>ClassCastException</code>.</li>
+    </ul>
+
+    <h2>컬렉션 유틸</h2>
+    <pre><code>Collections.max(list);
+Collections.min(list);
+Collections.shuffle(list);   // 무작위로 섞기
+Collections.sort(list);
+Collections.reverse(list);
+
+List&lt;Integer&gt; list = List.of(1, 2, 3);   // 불변 — add 시 UnsupportedOperationException
+Set&lt;Integer&gt; set = Set.of(1, 2, 3);
+Map&lt;Integer, String&gt; map = Map.of(1, "one", 2, "two");
+
+List&lt;Integer&gt; mutable = new ArrayList&lt;&gt;(list);              // 불변 → 가변
+List&lt;Integer&gt; unmodifiable = Collections.unmodifiableList(mutable); // 가변 → 불변
+
+List&lt;Integer&gt; empty = List.of();          // 빈 불변 리스트 (Collections.emptyList()보다 간결)
+
+List&lt;Integer&gt; synced = Collections.synchronizedList(mutable); // 멀티스레드용</code></pre>
+    <ul>
+      <li>결과가 없을 때 <code>null</code> 대신 빈 리스트를 돌려주는 편이 나은 경우가 많다.</li>
+      <li><code>Arrays.asList()</code>는 크기가 고정되어 <code>add</code>/<code>remove</code>는 안 되지만 <code>set</code>으로 값을 바꿀 수는 있는 애매한 리스트다. Java 9 이상이면 일반적으로 <strong><code>List.of()</code>를 권장</strong>한다.</li>
+      <li><code>synchronizedList</code>는 동기화 작업 때문에 일반 리스트보다 느리다. 지금은 존재만 알아 두고, 멀티스레드를 배운 뒤 다시 보면 된다.</li>
+    </ul>
+
+    <h2>컬렉션 프레임워크 전체 정리</h2>
+    <p>데이터 그룹을 저장하고 처리하는 통합 구조로, <strong>인터페이스</strong> + <strong>구현체</strong> + <strong>알고리즘</strong>으로 이루어진다.</p>
+    <pre><code>Iterable
+└─ Collection
+   ├─ List   : ArrayList, LinkedList
+   ├─ Set    : HashSet, LinkedHashSet, TreeSet
+   └─ Queue  : ArrayDeque, LinkedList, PriorityQueue
+      └─ Deque
+
+Map          : HashMap, LinkedHashMap, TreeMap  (Collection 상속 안 함)</code></pre>
+    <ul>
+      <li><code>Collection</code>은 <code>add</code>, <code>remove</code>, <code>size</code>, <code>isEmpty</code>, <code>contains</code>, <code>iterator</code>, <code>clear</code> 같은 공통 기능의 규약이다 → 일관성, 재사용성, 확장성, 다형성을 확보한다.</li>
+      <li>알고리즘은 <code>List.sort()</code>처럼 자료 구조 자체에 있거나, <code>Collections</code>·<code>Arrays</code>의 정적 메서드로 제공된다.</li>
+      <li><code>PriorityQueue</code>: 들어온 순서가 아니라 우선순위대로 처리한다. 놀이공원의 하이패스처럼.</li>
+    </ul>
+    <h3>실무 선택 가이드</h3>
+    <table>
+      <thead>
+        <tr><th>필요한 것</th><th>기본 선택</th><th>조건이 있을 때</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>순서 O, 중복 O</td><td><code>ArrayList</code> (대부분 이것)</td><td>앞쪽 추가·삭제가 많고 데이터가 많으면 <code>LinkedList</code></td></tr>
+        <tr><td>중복 X</td><td><code>HashSet</code></td><td>입력 순서 <code>LinkedHashSet</code>, 정렬 <code>TreeSet</code></td></tr>
+        <tr><td>키-값</td><td><code>HashMap</code></td><td>입력 순서 <code>LinkedHashMap</code>, 정렬 <code>TreeMap</code></td></tr>
+        <tr><td>처리 전 보관(큐·스택)</td><td><code>ArrayDeque</code></td><td>우선순위 처리 <code>PriorityQueue</code></td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>해시 기반은 평균 <code>O(1)</code>, 트리 기반은 <code>O(log n)</code>이다. 정렬이 꼭 필요한 게 아니면 해시를 쓴다.</li>
+      <li>실무에서 가장 많이 쓰는 건 <code>List</code>와 <code>Map</code>이다.</li>
+    </ul>
+
+    <h2>정리</h2>
+    <ul>
+      <li>순회는 <code>Iterable</code>·<code>Iterator</code>로, 정렬 기준은 <code>Comparable</code>·<code>Comparator</code>로 추상화했다 → 쓰는 쪽은 구현을 몰라도 된다.</li>
+      <li>컬렉션 프레임워크는 인터페이스와 알고리즘이 맞물리도록 처음부터 설계된 구조다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 중급 2편",
+      courseHome: "index.html",
+      currentId: "section-10",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 1 - 김영한의 실전 자바 중급 2편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-01"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 중급 2편</p>
+    <h1>1. 제네릭 - Generic 1</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 중급 2편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>출발점 — 타입마다 박스를 만들면 중복이 터진다</h2>
+    <ul>
+      <li>값을 넣고 꺼내기만 하는 단순한 박스를 생각해 보자. <code>Integer</code>를 담는 <code>IntegerBox</code>, <code>String</code>을 담는 <code>StringBox</code>는 <strong>필드 타입만 다르고 구조는 똑같다</strong>.</li>
+      <li><code>Double</code>, <code>Boolean</code>… 담을 타입이 늘어날 때마다 거의 같은 클래스를 하나씩 더 만들어야 한다 → <strong>코드 중복</strong>.</li>
+      <li>타입이 다른 게 문제라면, 모든 타입의 부모인 <code>Object</code>로 합치면 되지 않을까?</li>
+    </ul>
+
+    <h2>Object로 합쳐보기 — 중복은 줄었지만 안전하지 않다</h2>
+    <pre><code>public class ObjectBox {
+    private Object value;
+
+    public void set(Object object) { this.value = object; }
+    public Object get() { return value; }
+}
+
+ObjectBox integerBox = new ObjectBox();
+integerBox.set(10);
+Integer integer = (Integer) integerBox.get(); // 꺼낼 때마다 다운캐스팅
+
+integerBox.set("문자100");                    // 컴파일은 통과
+Integer result = (Integer) integerBox.get();  // ClassCastException</code></pre>
+    <ul>
+      <li>다형적 참조 덕분에 클래스 하나로 모든 타입을 담을 수 있다 → 중복은 해결.</li>
+      <li>대신 문제가 두 가지 생긴다.
+        <ul>
+          <li><strong>반환 타입이 항상 <code>Object</code></strong> — 자식 타입 변수에 부모 타입을 바로 담을 수 없으니, 꺼낼 때마다 다운캐스팅해야 한다.</li>
+          <li><strong>잘못된 타입도 들어간다</strong> — <code>set(Object)</code>는 무엇이든 받으므로, 정수용으로 쓰던 박스에 문자열을 넣어도 컴파일러가 막지 못한다 → 꺼내는 순간 런타임에 <code>ClassCastException</code>.</li>
+        </ul>
+      </li>
+      <li>결국 <strong>딜레마</strong>에 빠진다.
+        <ul>
+          <li>타입별 클래스: 타입 안전성 ○ / 코드 재사용 ✕</li>
+          <li><code>ObjectBox</code>: 타입 안전성 ✕ / 코드 재사용 ○</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>제네릭 적용 — 두 마리 토끼를 잡는다</h2>
+    <pre><code>public class GenericBox&lt;T&gt; {
+    private T value;
+
+    public void set(T value) { this.value = value; }
+    public T get() { return value; }
+}
+
+GenericBox&lt;Integer&gt; integerBox = new GenericBox&lt;Integer&gt;(); // 생성 시점에 T = Integer
+integerBox.set(10);
+// integerBox.set("문자100");   // 컴파일 오류
+Integer integer = integerBox.get(); // 캐스팅 불필요
+
+GenericBox&lt;String&gt; stringBox = new GenericBox&lt;&gt;(); // 타입 추론으로 오른쪽 생략</code></pre>
+    <ul>
+      <li>클래스 이름 옆에 <code>&lt;T&gt;</code>를 붙이면 <strong>제네릭 클래스</strong>다. <code>&lt;&gt;</code>는 모양을 따서 <strong>다이아몬드</strong>라고 부른다.</li>
+      <li>클래스를 만들 때는 타입을 정하지 않고 <code>T</code>로 비워 둔다 → <strong>객체를 생성할 때</strong> 원하는 타입을 지정하면 <code>T</code>가 그 타입으로 결정된다.</li>
+      <li>타입이 안 맞으면 컴파일 오류가 나고, 꺼낼 때 캐스팅도 필요 없다 → <strong>코드 재사용 + 타입 안전성</strong> 동시 달성.</li>
+      <li><code>GenericBox&lt;Integer&gt;</code>라고 해서 <code>Integer</code>용 클래스가 실제로 만들어지는 건 아니다. 코드가 그렇게 바뀐 것처럼 <strong>컴파일러가 타입 정보를 가지고 검사</strong>해 주는 것이다.</li>
+      <li><strong>타입 추론</strong>: <code>new GenericBox&lt;&gt;()</code>처럼 생성부의 타입을 생략할 수 있다. 변수 선언부를 보고 컴파일러가 알아내기 때문이다. 즉, 컴파일러가 타입을 읽어낼 수 있는 곳에서만 생략 가능하고, 변수 선언부에는 타입 정보가 있어야 한다.</li>
+    </ul>
+
+    <h2>용어 정리 — 메서드의 매개변수와 인자에 대응시키기</h2>
+    <ul>
+      <li>제네릭의 핵심: <strong>사용할 타입을 미리 결정하지 않는다</strong>. 클래스를 정의하는 시점이 아니라 실제로 사용하는 생성 시점으로 결정을 미룬다.</li>
+      <li>이건 메서드와 똑같은 발상이다. <code>println("hello")</code>처럼 값을 메서드 안에 박아 두면 재사용이 안 되지만, 매개변수로 받으면 값 결정을 호출 시점으로 미룰 수 있다.</li>
+    </ul>
+    <table>
+      <thead>
+        <tr><th></th><th>메서드</th><th>제네릭</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>미루는 대상</td><td>사용할 <strong>값</strong></td><td>사용할 <strong>타입</strong></td></tr>
+        <tr><td>정의할 때</td><td>매개변수 (<code>String param</code>)</td><td>타입 매개변수 (<code>&lt;T&gt;</code>)</td></tr>
+        <tr><td>사용할 때</td><td>인자 (<code>"hello"</code>)</td><td>타입 인자 (<code>&lt;Integer&gt;</code>)</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li><strong>제네릭(Generic)</strong> = "일반적인, 범용적인". 특정 타입에 묶이지 않고 두루 쓸 수 있다는 뜻.</li>
+      <li><strong>제네릭 타입</strong>: 타입 매개변수를 사용해 정의한 클래스나 인터페이스. <code>GenericBox&lt;T&gt;</code>처럼.</li>
+      <li><strong>타입 매개변수</strong>: 대체될 자리에 쓰는 변수, <code>T</code>.</li>
+      <li><strong>타입 인자</strong>: 사용할 때 넘기는 실제 타입, <code>Integer</code>·<code>String</code>.</li>
+    </ul>
+
+    <h2>관례와 주의할 점</h2>
+    <ul>
+      <li>타입 매개변수 이름은 아무렇게나 지어도 동작하지만, 관례상 <strong>용도를 나타내는 대문자 한 글자</strong>를 쓴다: <code>E</code>(Element), <code>K</code>(Key), <code>N</code>(Number), <code>T</code>(Type), <code>V</code>(Value), 두 번째·세 번째 타입은 <code>S</code>, <code>U</code>, <code>V</code>.</li>
+      <li><code>class Data&lt;K, V&gt;</code>처럼 여러 개를 한 번에 선언할 수 있다.</li>
+      <li>타입 인자로 <strong>기본형은 못 쓴다</strong> — <code>GenericBox&lt;int&gt;</code> ✕, 래퍼 클래스 <code>GenericBox&lt;Integer&gt;</code> ○.</li>
+      <li><strong>로우 타입(raw type)</strong>: <code>new GenericBox()</code>처럼 <code>&lt;&gt;</code>를 통째로 생략한 형태. 내부 타입이 <code>Object</code>로 동작한다.
+        <ul>
+          <li>제네릭이 없던 옛날 코드와의 하위 호환 때문에 남아 있을 뿐이므로 쓰지 말자.</li>
+          <li><code>Object</code>를 담고 싶다면 <code>new GenericBox&lt;Object&gt;()</code>로 명시한다.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>활용 예제 — 동물 박스</h2>
+    <pre><code>Box&lt;Dog&gt; dogBox = new Box&lt;&gt;();
+dogBox.set(new Dog("멍멍이", 100));
+// dogBox.set(new Cat("냐옹이", 50)); // 컴파일 오류
+Dog dog = dogBox.get();
+
+Box&lt;Animal&gt; animalBox = new Box&lt;&gt;();
+animalBox.set(new Animal("동물", 0));
+animalBox.set(new Dog("멍멍이", 100)); // 부모 타입은 자식을 담을 수 있다
+Animal animal = animalBox.get();       // 꺼낼 땐 Animal 타입</code></pre>
+    <ul>
+      <li><code>Animal</code>을 부모로 <code>Dog</code>, <code>Cat</code>이 <code>sound()</code>를 오버라이딩하는 구조.</li>
+      <li><code>Box&lt;Dog&gt;</code>는 <code>Dog</code>만 받는다 → 타입 안전성을 눈으로 확인할 수 있다.</li>
+      <li><code>Box&lt;Animal&gt;</code>에서 <code>T</code>는 <code>Animal</code>이므로, <code>set(Animal)</code>에 자식인 <code>Dog</code>·<code>Cat</code>도 다형성으로 들어간다. 대신 꺼낼 때는 <code>Animal</code>로 나오므로, <code>Dog</code>로 쓰려면 다운캐스팅이 필요하다.</li>
+    </ul>
+
+    <h2>정리</h2>
+    <ul>
+      <li>타입별 클래스 → 중복, <code>Object</code> → 안전성 상실, <strong>제네릭 → 둘 다 해결</strong>.</li>
+      <li>제네릭의 본질은 <strong>타입 결정을 사용 시점으로 미루는 것</strong> — 메서드 매개변수가 값 결정을 미루는 것과 같은 구조다.</li>
+      <li>타입 인자는 참조형만 가능, 로우 타입은 쓰지 않는다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 중급 2편",
+      courseHome: "index.html",
+      currentId: "section-01",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 3 - 김영한의 실전 자바 중급 2편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-03"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 중급 2편</p>
+    <h1>3. 컬렉션 프레임워크 - ArrayList</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 중급 2편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>배열 — 인덱스는 빠르고, 검색은 느리다</h2>
+    <ul>
+      <li>여러 데이터를 구조화해서 다루는 방법이 <strong>자료 구조</strong>이고, 자바는 이를 <strong>컬렉션 프레임워크</strong>로 제공한다. 그 출발점이 배열이다.</li>
+      <li><strong>인덱스로 입력·변경·조회</strong>: 한 번의 계산으로 위치를 찾는다. 데이터가 아무리 많아도 똑같이 빠르다.
+        <ul>
+          <li>배열은 메모리에 <strong>연속으로</strong> 잡히고 칸 크기가 같다 (<code>int</code>라면 4byte).</li>
+          <li><code>위치 = 배열 시작 주소 + (타입 크기 × 인덱스)</code> → 끝까지 훑을 필요 없이 주소를 바로 계산한다.</li>
+        </ul>
+      </li>
+      <li><strong>값으로 검색</strong>: 저장된 값을 알려면 열어 봐야 한다 → 처음부터 끝까지 비교하는 <strong>순차 검색</strong>이 필요하고, 크기가 n이면 최악의 경우 n번 비교한다.</li>
+    </ul>
+
+    <h2>빅오(O) 표기법</h2>
+    <ul>
+      <li>정확한 실행 시간이나 연산 횟수를 세는 게 아니라, <strong>데이터가 많아질 때 성능이 어떻게 변하는지 그 추세</strong>를 보는 도구다.</li>
+    </ul>
+    <table>
+      <thead>
+        <tr><th>표기</th><th>이름</th><th>느낌</th><th>예</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>O(1)</code></td><td>상수 시간</td><td>데이터 양과 무관</td><td>배열 인덱스 접근</td></tr>
+        <tr><td><code>O(log n)</code></td><td>로그 시간</td><td>많아져도 거의 안 느려짐</td><td>트리 구조 탐색</td></tr>
+        <tr><td><code>O(n)</code></td><td>선형 시간</td><td>데이터에 비례</td><td>순차 검색</td></tr>
+        <tr><td><code>O(n log n)</code></td><td></td><td><code>O(n)</code>보다 조금 더 느림</td><td>효율적인 정렬</td></tr>
+        <tr><td><code>O(n²)</code></td><td>제곱 시간</td><td>조금만 늘어도 급증</td><td>이중 <code>for</code>문</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li><strong>상수는 버린다</strong>: 데이터가 매우 크다고 가정하면 <code>+2</code>, <code>/2</code> 같은 값은 영향이 미미하다 → <code>O(n + 2)</code>, <code>O(n/2)</code>도 그냥 <code>O(n)</code>.</li>
+      <li>별말이 없으면 <strong>최악의 경우</strong>를 기준으로 표기한다. 순차 검색은 운이 좋으면 <code>O(1)</code>, 최악은 <code>O(n)</code>, 평균은 <code>O(n/2)</code>인데 상수를 빼면 <code>O(n)</code>.</li>
+      <li>10만 건에서 인덱스 접근은 1번, 순차 검색은 최악 10만 번 → 인덱스를 쓸 수 있으면 최대한 활용한다.</li>
+    </ul>
+
+    <h2>배열에 데이터 추가 — 위치가 성능을 가른다</h2>
+    <ul>
+      <li>"추가"는 기존 값을 유지한 채 끼워 넣는 것이다. 빈 공간을 만들려면 기존 데이터를 오른쪽으로 밀어야 한다.</li>
+      <li><strong>끝에서부터</strong> 밀어야 한다. 앞에서부터 복사하면 다음 칸의 값을 덮어써 버린다.</li>
+    </ul>
+    <table>
+      <thead>
+        <tr><th>추가 위치</th><th>위치 찾기</th><th>밀기</th><th>합계</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>맨 앞</td><td><code>O(1)</code></td><td>전부 이동 <code>O(n)</code></td><td><code>O(n)</code></td></tr>
+        <tr><td>중간</td><td><code>O(1)</code></td><td>평균 절반 이동 <code>O(n/2)</code></td><td><code>O(n)</code></td></tr>
+        <tr><td>맨 끝</td><td><code>O(1)</code></td><td>이동 없음</td><td><code>O(1)</code></td></tr>
+      </tbody>
+    </table>
+    <pre><code>private static void addAtIndex(int[] arr, int index, int newValue) {
+    for (int i = arr.length - 1; i &gt; index; i--) {
+        arr[i] = arr[i - 1]; // 끝에서부터 오른쪽으로 한 칸씩
+    }
+    arr[index] = newValue;
+}</code></pre>
+    <ul>
+      <li>배열의 불편함 2가지: ① 생성할 때 크기가 <strong>고정</strong>된다 ② 데이터를 미는 코드를 매번 직접 짜야 한다 → 이걸 해결한 자료 구조가 <strong>리스트</strong>다.</li>
+    </ul>
+
+    <h2>직접 만드는 배열 리스트</h2>
+    <p><strong>리스트</strong> = 순서가 있고, 중복을 허용하고, <strong>크기가 동적으로 변하는</strong> 자료 구조. 배열을 내부에 감춰서 이런 편의를 제공하는 게 배열 리스트다.</p>
+    <h3>V1 — 기본 구조</h3>
+    <pre><code>public class MyArrayListV1 {
+    private static final int DEFAULT_CAPACITY = 5;
+    private Object[] elementData;
+    private int size = 0;
+
+    public MyArrayListV1() { elementData = new Object[DEFAULT_CAPACITY]; }
+
+    public void add(Object e) { elementData[size] = e; size++; }
+    public Object get(int index) { return elementData[index]; }
+
+    public Object set(int index, Object element) {
+        Object oldValue = get(index);
+        elementData[index] = element;
+        return oldValue;
+    }
+}</code></pre>
+    <ul>
+      <li><code>capacity</code>(배열 크기)와 <code>size</code>(실제 데이터 수)는 다르다. <code>size</code>가 다음에 넣을 위치 역할도 한다.</li>
+      <li><code>indexOf()</code>는 <code>size</code>까지 돌며 <code>equals()</code>로 찾고, 없으면 <code>-1</code>. <code>toString()</code>은 <code>Arrays.copyOf(elementData, size)</code>로 실제 데이터만 잘라서 출력한다.</li>
+      <li>강의 목적상 인덱스 검증 같은 코드는 생략했다.</li>
+      <li>꽉 찬 상태에서 더 넣으면 <code>ArrayIndexOutOfBoundsException</code> → 자동으로 늘어나야 한다.</li>
+    </ul>
+    <h3>V2 — 동적 배열</h3>
+    <pre><code>public void add(Object e) {
+    if (size == elementData.length) {
+        grow();
+    }
+    elementData[size] = e;
+    size++;
+}
+
+private void grow() {
+    int oldCapacity = elementData.length;
+    int newCapacity = oldCapacity * 2;
+    elementData = Arrays.copyOf(elementData, newCapacity);
+}</code></pre>
+    <ul>
+      <li>배열 자체는 늘릴 수 없다 → <strong>더 큰 새 배열을 만들고, 값을 복사하고, 참조를 바꾼다</strong>. 참조를 잃은 옛 배열은 GC 대상이 된다.</li>
+      <li><code>Arrays.copyOf(원본, 새 길이)</code>가 생성과 복사를 한 번에 해 준다.</li>
+      <li><strong>왜 2배?</strong> 1칸씩 늘리면 복사가 너무 자주 일어나고, 너무 크게 늘리면 메모리가 낭비된다 → 그 사이의 균형. 자바의 <code>ArrayList</code>는 약 50%씩 늘린다.</li>
+      <li>사용하는 쪽은 내부 사정을 몰라도 그냥 넣으면 된다 — 이게 추상화의 편리함이다.</li>
+    </ul>
+    <h3>V3 — 원하는 위치에 추가·삭제</h3>
+    <pre><code>public void add(int index, Object e) {
+    if (size == elementData.length) {
+        grow();
+    }
+    shiftRightFrom(index);
+    elementData[index] = e;
+    size++;
+}
+
+public Object remove(int index) {
+    Object oldValue = get(index);
+    shiftLeftFrom(index);
+    size--;
+    elementData[size] = null; // 끝자리 비우기
+    return oldValue;
+}</code></pre>
+    <ul>
+      <li>위치를 찾는 건 <code>O(1)</code>이지만, 데이터를 밀거나 당기는 <strong>쉬프트</strong>가 <code>O(n)</code> → 앞·중간 작업이 느린 이유.</li>
+      <li>삭제 후 마지막 자리를 <code>null</code>로 비워 안 쓰는 객체가 GC될 수 있게 한다.</li>
+    </ul>
+    <h3>V4 — 제네릭 도입, 그런데 내부 배열은 왜 <code>Object[]</code>?</h3>
+    <pre><code>public class MyArrayListV4&lt;E&gt; {
+    private Object[] elementData;
+
+    public MyArrayListV4(int initialCapacity) {
+        elementData = new Object[initialCapacity]; // new E[...]는 불가능
+    }
+
+    public void add(E e) { ... }
+
+    @SuppressWarnings("unchecked")
+    public E get(int index) {
+        return (E) elementData[index];
+    }
+}</code></pre>
+    <ul>
+      <li><code>Object</code>로 받던 V3는 숫자 리스트에 문자열이 들어가도 막지 못해, 꺼낼 때 <code>ClassCastException</code>이 터진다 → 제네릭 도입. <code>E</code>는 Element의 약자.</li>
+      <li><strong><code>new E[capacity]</code>는 불가능하다.</strong> 타입 이레이저로 런타임에 <code>E</code>의 정보가 없기 때문 → 내부 배열은 <code>Object[]</code>로 둘 수밖에 없다.</li>
+      <li>그래도 안전하다: <code>Object[]</code>에는 무엇이든 담을 수 있고, <code>add(E)</code>라는 <strong>입구</strong>가 <code>E</code>만 받도록 막았으므로 배열에는 항상 <code>E</code>만 들어 있다 → 꺼낼 때의 <code>(E)</code> 캐스팅도 항상 성공한다. 그래서 <code>@SuppressWarnings("unchecked")</code>로 경고를 숨긴다.</li>
+    </ul>
+
+    <h2>정리 — 배열 리스트의 성능과 한계</h2>
+    <table>
+      <thead>
+        <tr><th>연산</th><th>빅오</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>마지막에 추가·삭제</td><td><code>O(1)</code></td></tr>
+        <tr><td>앞·중간에 추가·삭제</td><td><code>O(n)</code></td></tr>
+        <tr><td>인덱스 조회</td><td><code>O(1)</code></td></tr>
+        <tr><td>값 검색</td><td><code>O(n)</code></td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>순서대로 뒤에 넣고 뒤에서 빼는 작업에 강하다.</li>
+      <li>한계 ① 정확한 크기를 모르면 뒤쪽 빈 공간이 <strong>메모리 낭비</strong>가 된다 ② 앞·중간 추가·삭제가 느리다 → 이를 보완하는 게 다음 챕터의 <strong>연결 리스트</strong>.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 중급 2편",
+      courseHome: "index.html",
+      currentId: "section-03",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

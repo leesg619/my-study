@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 11 - 김영한의 실전 자바 중급 2편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-11"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 중급 2편</p>
+    <h1>11. 다음으로</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 중급 2편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>이 강의를 한 줄씩 돌아보면</h2>
+    <ul>
+      <li><strong>제네릭</strong> — 코드 재사용과 타입 안전성, 두 마리 토끼. 타입 매개변수 제한, 제네릭 메서드, 와일드카드, 타입 이레이저까지.</li>
+      <li><strong>배열과 빅오</strong> — 인덱스는 빠르고 검색은 느리다. 이후 모든 자료 구조를 판단하는 기준이 됐다.</li>
+      <li><strong>ArrayList·LinkedList</strong> — 직접 만들고, 인터페이스로 추상화하고, 성능을 측정했다. 이론과 실제가 다르다는 것도 봤다.</li>
+      <li><strong>해시와 Set</strong> — 배열 인덱스를 적극 활용하는 발상 → 메모리 낭비 → 나머지 연산 → 충돌 처리 → <code>hashCode()</code>·<code>equals()</code>의 중요성.</li>
+      <li><strong>Map·Stack·Queue·Deque</strong> — <code>Map</code>의 키는 곧 <code>Set</code>. 스택과 큐는 <code>ArrayDeque</code>로.</li>
+      <li><strong>순회·정렬·유틸</strong> — <code>Iterable</code>·<code>Iterator</code>, <code>Comparable</code>·<code>Comparator</code>로 사용하는 쪽을 편하게 만드는 추상화.</li>
+      <li>강사님 평가: 이 정도면 컬렉션에 대해서는 실무 개발자보다 더 깊이 이해한 수준이다.</li>
+    </ul>
+
+    <h2>개발자의 학습 3단계</h2>
+    <ol>
+      <li><strong>언어 기본 문법</strong> — 프로그래밍 언어 자체.</li>
+      <li><strong>고급 개념과 라이브러리</strong> — 자바 기본편부터 고급편까지가 여기에 해당한다.</li>
+      <li><strong>프레임워크와 생태계</strong> — 실무 활용.</li>
+    </ol>
+
+    <h2>앞으로의 로드맵</h2>
+    <ul>
+      <li><strong>실전 자바 - 고급편</strong>: 멀티스레드, IO, 네트워크, 람다, 스트림.</li>
+      <li><strong>데이터베이스</strong>: 별도 로드맵을 준비 중. 스프링 부트와 JPA 실무 로드맵에 들어가기 전에 DB 지식이 필요하다. 그 전 강의들은 DB를 몰라도 따라갈 수 있게 구성되어 있다.</li>
+      <li><strong>스프링</strong>: 백엔드 개발자에게 필수다. 스프링은 백엔드 생태계의 중심에서 수많은 오픈소스를 통합하므로, 스프링을 배우는 것은 곧 자바 백엔드 생태계와 베스트 프랙티스를 함께 배우는 일이다.</li>
+    </ul>
+
+    <h2>스프링을 공부하는 법</h2>
+    <ul>
+      <li>스프링은 너무 커서, 가까이 붙으면 코끼리 다리만 보다 뭔지도 모르고 포기하게 된다 → <strong>먼저 숲을 보고, 그다음 나무를 본다</strong>.</li>
+      <li>순서: 스프링 입문(간단한 예제로 전체 그림 파악) → 스프링 핵심 원리 → HTTP·MVC → DB 접근 기술.</li>
+      <li>스프링의 진짜 핵심은 <strong>객체지향</strong>이다. 다형성, OCP, 의존관계 주입을 편리하게 쓰게 해 주는 도구 — 이번 코스의 <code>MyList</code>와 <code>BatchProcessor</code> 예제까지 전부 그 빌드업이었다.</li>
+      <li>공부 방법: 처음에는 코드를 따라가며 전체 그림을 잡고, 복습할 때 자세히 정리하며 직접 코딩한다. 두 번 정도 반복하면 이해도가 크게 오른다.</li>
+    </ul>
+
+    <h2>정리</h2>
+    <ul>
+      <li>직접 구현하며 왜 그렇게 동작하는지를 이해한 것이 이 코스의 수확이다.</li>
+      <li>결정을 미래로 미루는 설계(매개변수, 제네릭, DI)는 스프링에서 다시 만나게 된다.</li>
+      <li>다음 단계는 자바 고급편, 그리고 DB와 스프링.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 중급 2편",
+      courseHome: "index.html",
+      currentId: "section-11",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

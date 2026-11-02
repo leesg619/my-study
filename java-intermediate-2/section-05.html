@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 5 - 김영한의 실전 자바 중급 2편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-05"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 중급 2편</p>
+    <h1>5. 컬렉션 프레임워크 - List</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 중급 2편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>리스트 추상화 — 인터페이스 도입</h2>
+    <ul>
+      <li>다형성과 OCP를 가장 잘 활용할 수 있는 곳 중 하나가 자료 구조다.</li>
+      <li><code>MyArrayList</code>와 <code>MyLinkedList</code>는 내부 구현이 달라도 <strong>사용자 입장에서는 같은 기능</strong>이다 → 공통 기능을 인터페이스로 뽑는다.</li>
+    </ul>
+    <pre><code>public interface MyList&lt;E&gt; {
+    int size();
+    void add(E e);
+    void add(int index, E e);
+    E get(int index);
+    E set(int index, E element);
+    E remove(int index);
+    int indexOf(E o);
+}
+
+public class MyArrayList&lt;E&gt; implements MyList&lt;E&gt; { ... }
+public class MyLinkedList&lt;E&gt; implements MyList&lt;E&gt; { ... }</code></pre>
+    <ul>
+      <li>기존 구현체에 <code>implements</code>와 <code>@Override</code>만 붙이면 된다. <code>@Override</code> 덕분에 시그니처 실수를 컴파일러가 잡아 준다.</li>
+    </ul>
+
+    <h2>의존관계 주입 — 구현체를 바깥에서 결정한다</h2>
+    <p>예제: 대량 데이터를 한 번에 처리하는 <code>BatchProcessor</code>. 맨 앞에 데이터를 계속 추가하는 작업을 한다.</p>
+    <pre><code>// 구체적인 클래스에 의존 — 리스트를 바꾸려면 이 코드를 고쳐야 한다
+public class BatchProcessor {
+    private final MyArrayList&lt;Integer&gt; list = new MyArrayList&lt;&gt;();
+}
+
+// 추상적인 것에 의존 + 외부에서 주입
+public class BatchProcessor {
+    private final MyList&lt;Integer&gt; list;
+
+    public BatchProcessor(MyList&lt;Integer&gt; list) {
+        this.list = list;
+    }
+
+    public void logic(int size) {
+        for (int i = 0; i &lt; size; i++) {
+            list.add(0, i); // 앞에 추가
+        }
+    }
+}
+
+new BatchProcessor(new MyArrayList&lt;&gt;()).logic(50_000);
+new BatchProcessor(new MyLinkedList&lt;&gt;()).logic(50_000);</code></pre>
+    <ul>
+      <li>앞쪽 추가가 많으니 배열 리스트(<code>O(n)</code>)는 느리다. 구체 클래스에 의존하면 연결 리스트로 바꿀 때 <code>BatchProcessor</code>의 코드까지 고쳐야 한다.</li>
+      <li><code>MyList</code>에만 의존하고 실제 구현체는 생성자로 받으면, <code>BatchProcessor</code>는 그대로 두고 생성하는 쪽에서 선택만 바꾸면 된다.</li>
+      <li>이렇게 외부에서 의존관계가 결정되어 들어오는 것이 <strong>의존관계 주입(DI)</strong>이고, 생성자로 받으므로 <strong>생성자 의존관계 주입</strong>이다.</li>
+      <li>실제로 돌려 보면 5만 건 기준 강의 환경에서 배열 리스트 약 1.4초, 연결 리스트 약 2ms → 데이터가 많을수록 차이가 더 벌어진다. 빅오 이론이 실제 수치로 확인된다.</li>
+    </ul>
+
+    <h2>컴파일 타임 vs 런타임 의존관계</h2>
+    <table>
+      <thead>
+        <tr><th></th><th>컴파일 타임</th><th>런타임</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>언제</td><td>코드를 컴파일하는 시점</td><td>프로그램이 실행되는 시점</td></tr>
+        <tr><td>보는 것</td><td>소스 코드의 클래스·인터페이스 관계</td><td>실제 인스턴스의 참조 관계</td></tr>
+        <tr><td>성격</td><td>정적 — 실행하지 않아도 알 수 있다</td><td>동적 — 실행 중에 달라질 수 있다</td></tr>
+        <tr><td><code>BatchProcessor</code></td><td><code>MyList</code>에 의존</td><td><code>MyArrayList</code> 또는 <code>MyLinkedList</code> 인스턴스를 참조</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>화살표는 "누가 누구를 아는가"다. <code>BatchProcessor</code> → <code>MyList</code> ← <code>MyArrayList</code>. 자식은 부모를 알지만 부모는 자식을 모른다.</li>
+      <li>컴파일 타임에 추상에 의존해야 런타임에 구현체를 갈아 끼울 수 있다.</li>
+      <li>이 구조가 <strong>OCP</strong>를 지킨다: 새 리스트 구현체를 추가해도(확장 열림) <code>BatchProcessor</code>는 고치지 않는다(변경 닫힘).</li>
+      <li>GoF의 <strong>전략 패턴</strong>도 같은 원리다. 클라이언트 변경 없이 알고리즘을 교체한다 — <code>MyList</code>가 전략 인터페이스, 구현체가 구체 전략.</li>
+      <li><strong>결정을 미래로 미룬다</strong>: 메서드 매개변수(값), 제네릭(타입), DI(구현체)는 모두 같은 발상이다. 지금 정적으로 정하지 않고, 변하는 부분을 나중에 결정하게 해서 재사용성과 유연성을 높인다.</li>
+    </ul>
+
+    <h2>직접 만든 리스트의 성능 비교</h2>
+    <p>같은 코드에 구현체만 주입해서 앞·중간·뒤 추가, 인덱스 조회, 검색을 측정했다. 추상화 덕분에 측정 코드를 재사용할 수 있다.</p>
+    <table>
+      <thead>
+        <tr><th>연산</th><th>MyArrayList 이론</th><th>MyLinkedList 이론</th><th>실제 측정</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>앞에 추가</td><td><code>O(n)</code></td><td><code>O(1)</code></td><td>연결 리스트 압승</td></tr>
+        <tr><td>중간 추가</td><td><code>O(n)</code></td><td><code>O(n)</code></td><td>배열 리스트가 약간 빠름</td></tr>
+        <tr><td>뒤에 추가</td><td><code>O(1)</code></td><td><code>O(n)</code></td><td>배열 리스트 압승</td></tr>
+        <tr><td>인덱스 조회</td><td><code>O(1)</code></td><td><code>O(n)</code></td><td>배열 리스트는 어디든 즉시, 연결 리스트는 뒤로 갈수록 느림</td></tr>
+        <tr><td>검색</td><td><code>O(n)</code></td><td><code>O(n)</code></td><td>배열 리스트가 수 배 빠름</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li><strong>왜 빅오가 같아도 배열 리스트가 빠른가?</strong> 현대 컴퓨터 구조 때문이다.
+        <ul>
+          <li>배열은 메모리에 연속으로 있어 <strong>CPU 캐시 효율</strong>이 좋고 접근이 빠르다.</li>
+          <li>노드는 메모리에 흩어져 있어 캐시 효율이 떨어지고, 노드를 생성·연결하는 비용도 든다.</li>
+        </ul>
+      </li>
+      <li>이론과 실제는 다르다. 빅오는 추세를 알려 줄 뿐이니 <strong>직접 돌려 봐야 한다</strong>.</li>
+    </ul>
+
+    <h2>자바가 제공하는 List</h2>
+    <p><code>Collection</code> 인터페이스 아래 <code>List</code>, <code>Set</code>, <code>Queue</code>가 있고, <code>List</code> 아래 <code>ArrayList</code>, <code>LinkedList</code> 등의 구현체가 있다. 지금까지 만든 것에서 사실상 "My"만 빼면 된다.</p>
+    <ul>
+      <li><strong><code>Collection</code></strong>: 데이터 그룹을 다루는 공통 기능의 최상위 인터페이스.</li>
+      <li><strong><code>List</code></strong>: 순서가 있고 중복을 허용하는 컬렉션. <code>add</code>, <code>get</code>, <code>set</code>, <code>remove</code>, <code>indexOf</code>, <code>contains</code>, <code>size</code>, <code>isEmpty</code>, <code>clear</code>, <code>sort</code> 등을 제공한다.</li>
+    </ul>
+    <h3><code>java.util.ArrayList</code> — 직접 만든 것과 다른 점</h3>
+    <ul>
+      <li>기본 <code>capacity</code>는 10이고, 넘치면 약 50%씩 늘린다.</li>
+      <li>요소 이동에 <code>System.arraycopy()</code> 같은 <strong>메모리 고속 복사</strong>를 쓴다. 시스템 레벨에서 덩어리째 옮기므로 한 칸씩 미는 반복문보다 훨씬 빠르다 (강의 측정에서 약 10배).</li>
+    </ul>
+    <h3><code>java.util.LinkedList</code> — 직접 만든 것과 다른 점</h3>
+    <ul>
+      <li><strong>이중 연결 리스트</strong>: 노드에 <code>next</code>와 <code>prev</code>가 있어 양방향으로 이동한다.</li>
+      <li><code>first</code>뿐 아니라 <code>last</code>도 가지고 있다 → 뒤쪽 추가·삭제도 <code>O(1)</code>.</li>
+      <li>인덱스 조회 시 위치에 따라 앞이나 뒤 중 가까운 쪽에서 출발한다. 그래도 중간은 오래 걸리는 <code>O(n)</code>이다.</li>
+    </ul>
+
+    <h2>자바 리스트의 성능과 선택 기준</h2>
+    <table>
+      <thead>
+        <tr><th>연산</th><th>ArrayList</th><th>LinkedList</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>앞에 추가·삭제</td><td><code>O(n)</code> — 고속 복사로 완화</td><td><code>O(1)</code> — 가장 빠름</td></tr>
+        <tr><td>중간 추가·삭제</td><td><code>O(n)</code> — 고속 복사 덕분에 실제론 훨씬 빠름</td><td><code>O(n)</code> — 찾아가는 데 오래 걸림</td></tr>
+        <tr><td>뒤에 추가·삭제</td><td><code>O(1)</code></td><td><code>O(1)</code></td></tr>
+        <tr><td>인덱스 조회</td><td><code>O(1)</code></td><td><code>O(n)</code></td></tr>
+        <tr><td>검색</td><td><code>O(n)</code></td><td><code>O(n)</code></td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>이론상 중간 삽입은 연결 리스트가 유리해 보이지만, 실제로는 <code>ArrayList</code>가 수십 배 빠르다 — 고속 복사와 CPU 캐시 덕분.</li>
+      <li><code>capacity</code>를 넘을 때의 재할당·복사도 전체 성능에 큰 영향은 없다.</li>
+      <li><strong>실무에서는 거의 대부분 <code>ArrayList</code>를 기본으로 쓴다.</strong></li>
+      <li><strong><code>LinkedList</code>를 고려할 때</strong>: 데이터가 많고, 앞쪽 추가·삭제가 반복되는 경우. 데이터가 몇십 건이면 어느 쪽이든 차이가 없다.</li>
+    </ul>
+
+    <h2>정리</h2>
+    <ul>
+      <li>컴파일 타임에 추상에 의존하고, 런타임에 구현체를 주입받는다 → OCP, 전략 패턴.</li>
+      <li>빅오는 추세일 뿐이고 실제 성능은 메모리 구조와 최적화에 좌우된다.</li>
+      <li>직접 구현해 봤기 때문에 왜 이런 차이가 나는지 설명할 수 있게 됐다. 기본은 <code>ArrayList</code>.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 중급 2편",
+      courseHome: "index.html",
+      currentId: "section-05",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>

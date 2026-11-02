@@ -20,6 +20,12 @@ window.COURSES = [
     href: "java-intermediate-1/index.html",
   },
   {
+    tag: "Java",
+    title: "김영한의 실전 자바 - 중급 2편",
+    description: "인프런 김영한 강의. 제네릭과 컬렉션 프레임워크를 직접 구현하며 정리합니다.",
+    href: "java-intermediate-2/index.html",
+  },
+  {
     tag: "Testing",
     title: "Practical Testing: 실용적인 테스트 가이드",
     description: "인프런 강의. 스프링 & JPA 기반 프로젝트의 단위/통합 테스트 작성법을 정리합니다.",

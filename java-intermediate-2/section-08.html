@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>섹션 8 - 김영한의 실전 자바 중급 2편</title>
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+  <div id="layout-root" data-current="section-08"></div>
+
+  <main class="content">
+    <p class="eyebrow">김영한의 실전 자바 - 중급 2편</p>
+    <h1>8. 컬렉션 프레임워크 - Set</h1>
+
+    <blockquote>
+      <p>인프런 김영한 강사님의 "김영한의 실전 자바 - 중급 2편" 강의를 듣고 정리한 학습 노트입니다. 강의 PDF를 그대로 옮긴 것이 아니라, 강의에서 설명한 흐름과 예시를 제 나름대로 재구성했습니다.</p>
+    </blockquote>
+
+    <h2>자바의 Set</h2>
+    <ul>
+      <li><code>Collection</code>의 자식 인터페이스 <code>Set</code>. 수학의 집합을 구현한 것으로, 중복이 없고 특정 요소가 있는지 확인하는 데 최적화되어 있다.</li>
+      <li><code>add</code>, <code>remove</code>, <code>contains</code> 등은 <code>List</code>와 비슷하지만, 순서가 없으므로 <strong>인덱스로 조회하는 메서드가 없다</strong>.</li>
+      <li><code>Set</code> 자체는 순서를 보장하지 <em>않는다고</em> 할 뿐이다. 구현체가 순서를 지켜 줄 수는 있다.</li>
+    </ul>
+    <table>
+      <thead>
+        <tr><th>구현체</th><th>내부 구조</th><th>순서</th><th>성능</th><th>쓰는 곳</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>HashSet</code></td><td>해시</td><td>보장 안 함</td><td>평균 <code>O(1)</code></td><td>기본 선택</td></tr>
+        <tr><td><code>LinkedHashSet</code></td><td>해시 + 연결 리스트</td><td><strong>입력 순서</strong></td><td>평균 <code>O(1)</code> (약간 더 무거움)</td><td>입력 순서가 필요할 때</td></tr>
+        <tr><td><code>TreeSet</code></td><td>레드-블랙 트리</td><td><strong>값의 정렬 순서</strong></td><td><code>O(log n)</code></td><td>정렬·범위 검색이 필요할 때</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li><code>LinkedHashSet</code>은 <code>HashSet</code>의 각 요소에 연결 정보를 더한 것이다. 넣은 순서대로 노드를 이어 두어 그 순서로 순회할 수 있고, 링크를 관리하는 만큼 조금 더 무겁다.</li>
+    </ul>
+    <pre><code>public static void main(String[] args) {
+    run(new HashSet&lt;&gt;());
+    run(new LinkedHashSet&lt;&gt;());
+    run(new TreeSet&lt;&gt;());
+}
+
+private static void run(Set&lt;String&gt; set) {
+    set.add("C");
+    set.add("B");
+    set.add("A");
+    set.add("1");
+    set.add("2");
+
+    Iterator&lt;String&gt; iterator = set.iterator();
+    while (iterator.hasNext()) {
+        System.out.print(iterator.next() + " ");
+    }
+}
+
+// HashSet:       순서 보장 없음
+// LinkedHashSet: C B A 1 2 (입력 순서)
+// TreeSet:       1 2 A B C (값의 순서)</code></pre>
+    <ul>
+      <li><code>TreeSet</code>은 값의 크기를 비교할 수 있어야 하므로 <code>Comparable</code>이나 <code>Comparator</code>로 비교 기준을 제공해야 한다.</li>
+      <li><code>iterator()</code>의 <code>hasNext()</code>로 다음 값이 있는지 묻고, <code>next()</code>로 꺼내며 이동한다.</li>
+    </ul>
+
+    <h2>TreeSet을 이해하기 위한 트리</h2>
+    <ul>
+      <li><strong>트리</strong>: 나무를 거꾸로 매단 모양으로, 부모·자식 노드로 이루어진다. 가장 위의 노드가 <strong>루트</strong>.</li>
+      <li><strong>이진 트리</strong>: 자식이 최대 2개.</li>
+      <li><strong>이진 탐색 트리</strong>: 왼쪽 자손은 더 작은 값, 오른쪽 자손은 더 큰 값. 넣는 시점에 이미 정렬된 자리를 찾아 들어간다.</li>
+    </ul>
+    <pre><code>class Node {
+    Object item;
+    Node left;
+    Node right;
+}</code></pre>
+    <h3>검색 — 한 번에 절반을 날린다</h3>
+    <ul>
+      <li>루트부터 비교해서 찾는 값이 크면 오른쪽, 작으면 왼쪽으로 내려간다.</li>
+      <li>한 번 비교할 때마다 탐색 대상이 <strong>절반으로 줄어든다</strong> → 16개면 비교 한 번 만에 8개가 후보에서 빠진다.</li>
+      <li>절반씩 나눠 1이 될 때까지의 횟수가 곧 연산 횟수 → <code>O(log n)</code>. 1024개면 약 10번, 데이터가 커질수록 리스트의 <code>O(n)</code>과 차이가 크게 벌어진다.</li>
+      <li>빅오에서는 밑 2도 상수처럼 빼고 그냥 <code>O(log n)</code>으로 쓴다.</li>
+    </ul>
+    <table>
+      <thead>
+        <tr><th>데이터 수</th><th><code>O(1)</code></th><th><code>O(log n)</code></th><th><code>O(n)</code></th></tr>
+      </thead>
+      <tbody>
+        <tr><td>16</td><td>1</td><td>4</td><td>16</td></tr>
+        <tr><td>1,024</td><td>1</td><td>10</td><td>1,024</td></tr>
+      </tbody>
+    </table>
+    <h3>균형 문제와 레드-블랙 트리</h3>
+    <ul>
+      <li>정렬된 값을 순서대로 넣으면 트리가 한쪽으로만 자라 연결 리스트처럼 된다 → 최악 <code>O(n)</code>.</li>
+      <li>이를 막기 위해 삽입·삭제 시 동적으로 균형을 맞추는 트리가 있다 (AVL, 레드-블랙 등). 자바 <code>TreeSet</code>은 <strong>레드-블랙 트리</strong>를 사용해 최악에도 <code>O(log n)</code>을 유지한다.</li>
+    </ul>
+    <h3>정렬된 순서로 꺼내기 — 중위 순회</h3>
+    <ul>
+      <li><strong>왼쪽 서브 트리 → 현재 노드 → 오른쪽 서브 트리</strong> 순서로 재귀 방문하면, 작은 값부터 차례로 나온다.</li>
+      <li>그래서 <code>TreeSet</code>을 순회하면 값의 정렬 순서로 출력된다.</li>
+    </ul>
+
+    <h2>자바 HashSet의 최적화</h2>
+    <ul>
+      <li>원리는 직접 만든 것과 거의 같지만, 데이터가 동적으로 늘어나는 상황을 처리해 준다.</li>
+      <li>데이터 수가 배열 크기의 <strong>75%</strong>를 넘으면 충돌이 많아진다. 충돌이 늘면 <code>equals()</code>로 하나씩 비교하는 비용이 커져 <code>O(n)</code>에 가까워진다.</li>
+      <li>그래서 75%를 넘는 순간 대공사를 한다.
+        <ul>
+          <li>배열 크기를 <strong>2배</strong>로 늘린다 (기본 크기 16).</li>
+          <li>크기가 바뀌었으니 나머지 연산 결과도 달라진다 → 모든 데이터의 해시 인덱스를 다시 계산해서 옮긴다. 이것이 <strong>재해싱(rehashing)</strong>.</li>
+        </ul>
+      </li>
+      <li>재해싱은 비싸기 때문에 <code>ArrayList</code>처럼 50%가 아니라 2배씩 넉넉히 늘려 횟수를 줄인다.</li>
+      <li><strong>버킷이 긴 경우의 최적화</strong>: 한 해시 인덱스에 데이터가 일정 수(약 8개) 이상 몰리면 연결 리스트를 트리로 자동 전환해 <code>O(n)</code>을 <code>O(log n)</code>으로 끌어내린다.</li>
+      <li>전 세계 개발자가 쓰는 라이브러리라 이런 실전 최적화가 잔뜩 들어 있다 → 직접 구현보다 <strong>라이브러리를 쓰는 게 맞다</strong>.</li>
+    </ul>
+
+    <h2>정리</h2>
+    <ul>
+      <li><strong>실무에서 <code>Set</code>이 필요하면 대부분 <code>HashSet</code></strong>. 입력 순서가 필요하면 <code>LinkedHashSet</code>, 정렬이 필요하면 <code>TreeSet</code>.</li>
+      <li>크기 조정과 재해싱은 자동이므로 특별한 경우가 아니면 기본 설정 그대로 쓴다.</li>
+      <li>직접 만든 객체를 넣을 때: <code>HashSet</code>은 <code>hashCode()</code>·<code>equals()</code>, <code>TreeSet</code>은 비교 기준이 필요하다.</li>
+    </ul>
+  </main>
+
+  <script src="sections.js"></script>
+  <script src="../assets/js/layout.js"></script>
+  <script>
+    initSectionPage({
+      rootPath: "../",
+      courseTitle: "김영한의 실전 자바 - 중급 2편",
+      courseHome: "index.html",
+      currentId: "section-08",
+      sections: window.SECTIONS,
+    });
+  </script>
+</body>
+</html>
